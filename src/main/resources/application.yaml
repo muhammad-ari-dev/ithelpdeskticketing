@@ -1,3 +1,20 @@
 spring:
   application:
     name: ITHelpdeskTicketing
+  datasource:
+    url: jdbc:sqlserver://localhost;databaseName=ITT;schema=Mst;trustServerCertificate=true
+    username: sa
+    password: password
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+      dialect: org.hibernate.dialect.SQLServerDialect
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: false
+    properties:
+      hibernate:
+        default_schema: Mst
+server:
+  port: 8080

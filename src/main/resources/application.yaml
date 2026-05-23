@@ -2,7 +2,7 @@ spring:
   application:
     name: ITHelpdeskTicketing
   datasource:
-    url: jdbc:sqlserver://localhost;databaseName=ITT;schema=Mst;trustServerCertificate=true
+    url: jdbc:sqlserver://localhost;databaseName=ITT;schema=master;trustServerCertificate=true
     username: sa
     password: password
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
@@ -15,6 +15,6 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        default_schema: Mst
+        default_schema: master
 server:
   port: 8080

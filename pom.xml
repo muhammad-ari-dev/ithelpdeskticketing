@@ -16,6 +16,7 @@
 		<java.version>21</java.version>
         <mssql-version>12.10.2.jre11</mssql-version>
 	</properties>
+
 	<dependencies>
 
         <dependency>

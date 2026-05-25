@@ -29,7 +29,5 @@ public class Employee extends BaseEntity {
     private String noHp;
     @Column(name = "otp", length = 64)
     private String otp;
-
-
     
 }

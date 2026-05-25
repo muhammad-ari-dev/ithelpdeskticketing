@@ -7,13 +7,15 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
-@MappedSuperclass // Menandakan ini parent class untuk Entity, bukan tabel database
+@MappedSuperclass
 public abstract class BaseEntity {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "Id")
     private UUID id;
     @Column(name = "CreatedBy",nullable = false, updatable = false)
@@ -30,4 +32,5 @@ public abstract class BaseEntity {
     private String deletedBy;
     @Column(name = "DeletedAt",insertable = false)
     private LocalDateTime deletedAt;
+    
 }

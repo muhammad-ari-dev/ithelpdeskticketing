@@ -6,6 +6,10 @@ import com.juaracoding.ITHelpdeskTicketing.util.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,5 +33,13 @@ public class Employee extends BaseEntity {
     private String noHp;
     @Column(name = "otp", length = 64)
     private String otp;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "IdParent", foreignKey = @ForeignKey(name = "FK_Employee_Parent"))
+    private Employee idParent;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "IdRole", foreignKey = @ForeignKey(name = "FK_Employee_Role"))
+    private Role role;
     
 }

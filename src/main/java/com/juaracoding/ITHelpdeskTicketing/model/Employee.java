@@ -1,45 +1,47 @@
 package com.juaracoding.ITHelpdeskTicketing.model;
 
-import org.hibernate.annotations.Comment;
-
 import com.juaracoding.ITHelpdeskTicketing.util.BaseEntity;
+import jakarta.persistence.*;
+import lombok.*;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ForeignKey;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.Setter;
+import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "MstEmployee",schema = "helpdesk")
 @Getter
 @Setter
-@Entity
-@Table(name = "MstEmployee", schema = "master")
-@Comment("Tabel Employee")
 public class Employee extends BaseEntity {
-    
-    @Column(name = "name", nullable = false, length = 64)
-    private String name;
-    @Column(name = "userName", nullable = false, unique = true, length = 64)
+
+    @Column(name = "EmployeeName", nullable = false, length = 64)
+    private String employeeName;
+
+    @Column(name = "UserName", nullable = false, length = 64, unique = true)
     private String userName;
-    @Column(name = "password", nullable = false, length = 64, unique = true)
+
+    @Column(name = "Password", nullable = false)
     private String password;
-    @Column(name = "email", nullable = false, unique = true, length = 255)
+
+    @Column(name = "Email", nullable = false, unique = true)
     private String email;
-    @Column(name = "noHp", nullable = false, unique = true, length = 20)
+
+    @Column(name = "NoHp", nullable = false, unique = true, length = 20)
     private String noHp;
-    @Column(name = "otp", length = 64)
-    private String otp;
+
+    // 1: Menggantikan isActive & isFirstLogin
+    @Column(name = "AccountStatus", nullable = false, length = 32)
+    private String accountStatus = "PENDING_PASSWORD";
+
+    @Column(name = "OtpCode", length = 6)
+    private String otpCode;
+
+    @Column(name = "OtpExpiryAt")
+    private LocalDateTime otpExpiryAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "IdParent", foreignKey = @ForeignKey(name = "FK_Employee_Parent"))
-    private Employee idParent;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "IdRole", foreignKey = @ForeignKey(name = "FK_Employee_Role"))
+    @JoinColumn(name = "RoleID", nullable = false)
     private Role role;
-    
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "LeadID")
+    private Employee lead;
 }

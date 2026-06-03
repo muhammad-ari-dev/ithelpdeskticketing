@@ -1,25 +1,20 @@
 package com.juaracoding.ITHelpdeskTicketing.model;
 
-import org.hibernate.annotations.Comment;
-
 import com.juaracoding.ITHelpdeskTicketing.util.BaseEntity;
+import jakarta.persistence.*;
+import lombok.*;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.Setter;
-
+@Entity
+@Table(name = "MstRole", schema = "helpdesk")
 @Getter
 @Setter
-@Entity
-@Table(name = "MstRole", schema = "master")
-@Comment("Tabel Role")
+@NoArgsConstructor
+@AllArgsConstructor
 public class Role extends BaseEntity {
-    
-    @Column(name = "name", nullable = false, length = 64)
-    private String name;
-    @Column(name = "description", length = 255)
-    private String description;
 
+    @Column(name = "RoleName", nullable = false, length = 64, unique = true)
+    private String roleName;
+
+    @Column(name = "RoleDesc")
+    private String roleDesc;
 }

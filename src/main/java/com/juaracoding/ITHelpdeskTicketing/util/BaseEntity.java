@@ -37,5 +37,7 @@ public abstract class BaseEntity {
 
     @Column(name = "DeletedAt", insertable = false)
     private LocalDateTime deletedAt;
+
+    private String setCreatedBy;
 }
 

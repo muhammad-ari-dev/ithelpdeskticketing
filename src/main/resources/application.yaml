@@ -2,9 +2,10 @@ spring:
   application:
     name: ITHelpdeskTicketing
   datasource:
-    url: jdbc:sqlserver://localhost;databaseName=ITT;schema=master;trustServerCertificate=true
+    url: jdbc:sqlserver://localhost;databaseName=TABEB31;schema=helpdesk;trustServerCertificate=true
     username: sa
     password: password
+#    password: ${DB_PASSWORD}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
   jpa:
     hibernate:
@@ -16,5 +17,17 @@ spring:
     properties:
       hibernate:
         default_schema: helpdesk
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: muhammadariferdiansyah77@gmail.com
+    password: gtksmayjuxbilssq
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 server:
   port: 8080

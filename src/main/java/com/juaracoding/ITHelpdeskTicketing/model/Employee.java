@@ -29,16 +29,13 @@ public class Employee extends BaseEntity {
 
     // 1: Menggantikan isActive & isFirstLogin
     @Column(name = "AccountStatus", nullable = false, length = 32)
-    private String accountStatus = "PENDING_PASSWORD";
+    private String accountStatus;
 
     @Column(name = "MagicToken", unique = true)
     private String magicToken; // 1: Tempat nyimpen token link email
 
     @Column(name = "MagicTokenExpiryAt")
     private LocalDateTime magicTokenExpiryAt; // 2: Batas waktu link (misal 24 jam)
-
-    @Column(name = "OtpCode", length = 6)
-    private String otpCode;
 
     @Column(name = "OtpExpiryAt")
     private LocalDateTime otpExpiryAt;

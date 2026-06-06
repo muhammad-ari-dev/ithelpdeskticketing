@@ -1,5 +1,6 @@
 package com.juaracoding.ITHelpdeskTicketing.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.juaracoding.ITHelpdeskTicketing.util.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,6 +11,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Role extends BaseEntity {
 
     @Column(name = "RoleName", nullable = false, length = 64, unique = true)

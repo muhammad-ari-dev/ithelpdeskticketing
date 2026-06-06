@@ -8,13 +8,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
+public interface EmployeeRepo extends JpaRepository<Employee, UUID> {
         Optional<Employee> findByUserName(String userName);
-        Optional<Employee> findByEmail(String email);
         Optional<Employee> findByMagicToken(String token);
 
         // Ini buat narik daftar Leader
-        List<Employee> findByRoleRoleName(String roleName);
+        List<Employee> findByRole_RoleNameIgnoreCase(String roleName);
 
         boolean existsByUserName(String userName);
         boolean existsByEmail(String email);

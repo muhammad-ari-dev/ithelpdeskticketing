@@ -11,37 +11,32 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    // FUNGSI 1: Kirim Email Magic Link
-    public void sendMagicLink(String toEmail, String employeeName, String magicToken) {
+//    public void kirimEmailTes(String toEmail) {
+//        SimpleMailMessage message = new SimpleMailMessage();
+//        message.setFrom("admin@helpdeskku.com"); // Bebas, ini cuma identitas
+//        message.setTo(toEmail);
+//        message.setSubject("Tes Koneksi Mailtrap");
+//        message.setText("Halo cuy! Kalau email ini nyampe, berarti setup lu SUKSES 100%! Backend lu udah jago kirim email.");
+//
+//        mailSender.send(message);
+//        System.out.println("Email sukses terkirim ke: " + toEmail);
+//    }
+
+    // Tambahin method ini di bawah method kirimEmailTes lu
+    public void sendMagicLink(String toEmail, String token) {
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("admin@helpdeskku.com"); // Email pengirim
         message.setTo(toEmail);
-        message.setSubject("Aktivasi Akun IT Helpdesk System");
+        message.setSubject("Undangan Setup Akun Lead - ITHelpdesk");
 
-        // Ganti port 5173 kalau Frontend lu pake Vite, atau 3000 kalau React biasa
-        String link = "http://localhost:5173/set-password?token=" + magicToken;
+        // Ini link yang nanti bakal diklik si Lead buat isi password
+        // 5173 itu default port React/Vite
+        String url = "http://localhost:5173/set-password?token=" + token;
 
-        String body = "Yth. " + employeeName + ",\n\n" +
-                "Akun Anda telah didaftarkan oleh Admin IT Helpdesk.\n" +
-                "Silakan klik link di bawah ini untuk membuat password dan mengaktifkan akun Anda:\n\n" +
-                link + "\n\n" +
-                "Terima kasih,\n" +
-                "Admin IT Helpdesk";
+        message.setText("Halo,\n\nAdmin telah mendaftarkan akun Anda sebagai Lead. " +
+                "Silakan klik link di bawah ini untuk membuat password Anda:\n\n" +
+                url + "\n\nTerima kasih.");
 
-        message.setText(body);
-        mailSender.send(message);
-    }
-
-    // FUNGSI 2: Kirim Email OTP (Buat Lupa Password)
-    public void sendOtpEmail(String toEmail, String otpCode) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(toEmail);
-        message.setSubject("Kode OTP Reset Password IT Helpdesk");
-
-        String body = "Kode OTP Reset Password Anda adalah: " + otpCode + "\n\n" +
-                "Kode ini akan kedaluwarsa dalam 10 menit.\n" +
-                "Jika Anda tidak merasa meminta reset password, abaikan email ini.";
-
-        message.setText(body);
         mailSender.send(message);
     }
 }

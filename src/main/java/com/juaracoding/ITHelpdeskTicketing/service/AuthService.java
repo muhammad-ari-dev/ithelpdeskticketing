@@ -1,159 +1,127 @@
 package com.juaracoding.ITHelpdeskTicketing.service;
 
-import com.juaracoding.ITHelpdeskTicketing.dto.EmployeeRequest;
-import com.juaracoding.ITHelpdeskTicketing.dto.LoginRequest;
-import com.juaracoding.ITHelpdeskTicketing.dto.ResetPasswordRequest;
+import com.juaracoding.ITHelpdeskTicketing.dto.LoginDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.RegisDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.SetPasswordDTO;
 import com.juaracoding.ITHelpdeskTicketing.model.Employee;
 import com.juaracoding.ITHelpdeskTicketing.model.Role;
-import com.juaracoding.ITHelpdeskTicketing.repository.EmployeeRepository;
-import com.juaracoding.ITHelpdeskTicketing.repository.RoleRepository;
+import com.juaracoding.ITHelpdeskTicketing.repository.EmployeeRepo;
+import com.juaracoding.ITHelpdeskTicketing.repository.RoleRepo;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import com.juaracoding.ITHelpdeskTicketing.dto.LeadResponseDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.LoginResponseDTO;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final EmployeeRepository employeeRepository;
-    private final RoleRepository roleRepository;
-    private final EmailService emailService; // <== INI TAMBAHANNYA CUY: Manggil Tukang Pos
+    private final EmployeeRepo employeeRepo;
+    private final RoleRepo roleRepo;
+    private final EmailService emailService;
 
+    // --- FITUR LOGIN ---
+    public LoginResponseDTO login(LoginDTO request) {
+        Employee employee = employeeRepo.findByUserName(request.getUserName())
+                .orElseThrow(() -> new RuntimeException("Username tidak ditemukan!"));
+
+        if (!employee.getPassword().equals(request.getPassword())) {
+            throw new RuntimeException("Password salah!");
+        }
+
+        if (!"ACTIVE".equals(employee.getAccountStatus())) {
+            throw new RuntimeException("Akun belum aktif! Cek email untuk aktivasi.");
+        }
+
+        return new LoginResponseDTO(employee);
+    }
+
+    // --- FITUR REGISTRASI (MAGIC LINK) ---
     @Transactional
-    public String createUser(EmployeeRequest request, String adminName) {
-        if (employeeRepository.existsByUserName(request.getUserName())) return "Username sudah digunakan!";
-        if (employeeRepository.existsByEmail(request.getEmail())) return "Email sudah terdaftar!";
+    public String registerEmployee(RegisDTO dto) {
+        // 1. Validasi Duplikasi
+        if (employeeRepo.existsByUserName(dto.getUserName())) {
+            return "Error: Username sudah dipakai!";
+        }
+        if (employeeRepo.existsByEmail(dto.getEmail())) {
+            return "Error: Email sudah terdaftar!";
+        }
 
-        // Ambil Role (pake Kapital sesuai DB lu)
-        String targetRole = request.getRoleName().toUpperCase().trim();
-        Role role = roleRepository.findByRoleName(targetRole)
-                .orElseThrow(() -> new RuntimeException("Role '" + targetRole + "' tidak ditemukan!"));
-
+        // 2. Mapping Data
         Employee employee = new Employee();
-        employee.setEmployeeName(request.getEmployeeName());
-        employee.setUserName(request.getUserName());
-        employee.setEmail(request.getEmail());
-        employee.setNoHp(request.getNoHp());
+        employee.setEmployeeName(dto.getEmployeeName());
+        employee.setUserName(dto.getUserName());
+        employee.setEmail(dto.getEmail());
+        employee.setNoHp(dto.getNoHp());
+
+        // --- TAMBAHAN PENTING ---
+        employee.setPassword("DEFAULT_PASSWORD_123"); // Biar gak null di DB
+        employee.setCreatedBy("ADMIN"); // Sesuai permintaan lu buat audit trail
+
+        // 3. Set Role
+        Role role = roleRepo.findByRoleName(dto.getRoleName())
+                .orElseThrow(() -> new RuntimeException("Error: Role '" + dto.getRoleName() + "' tidak ditemukan!"));
         employee.setRole(role);
 
-        // --- INI SOLUSINYA CUY: Isi CreatedBy manual ---
-        employee.setCreatedBy("ADMIN_SYSTEM"); // Atau pake adminName dari parameter
-        employee.setCreatedAt(LocalDateTime.now());
-        // -----------------------------------------------
-
-        employee.setPassword("LOCKED");
-        employee.setAccountStatus("PENDING_PASSWORD");
-
-        if (request.getLeadId() != null) {
-            employeeRepository.findById(request.getLeadId()).ifPresent(employee::setLead);
+        // 4. Logika Hierarki (Lead vs Staff)
+        if ("LEAD".equalsIgnoreCase(role.getRoleName())) {
+            employee.setLead(null);
+        } else {
+            if (dto.getLeadID() == null || dto.getLeadID().isEmpty()) {
+                throw new RuntimeException("Error: Staff wajib memiliki Lead!");
+            }
+            UUID leadUuid = UUID.fromString(dto.getLeadID());
+            Employee atasan = employeeRepo.findById(leadUuid)
+                    .orElseThrow(() -> new RuntimeException("Error: ID Lead tidak ditemukan!"));
+            employee.setLead(atasan);
         }
 
+        // 5. Setup Status
+        employee.setAccountStatus("PENDING");
         String token = UUID.randomUUID().toString();
         employee.setMagicToken(token);
-        employee.setMagicTokenExpiryAt(LocalDateTime.now().plusHours(24));
 
-        employeeRepository.save(employee); // SEKARANG GAK BAKAL EROR LAGI
+        // 6. Simpan ke Database
+        employeeRepo.save(employee);
 
-        try {
-            emailService.sendMagicLink(employee.getEmail(), employee.getEmployeeName(), token);
-        } catch (Exception e) {
-            throw new RuntimeException("Gagal kirim email: " + e.getMessage());
-        }
+        // 7. Kirim Email
+        emailService.sendMagicLink(employee.getEmail(), token);
 
-        return "Karyawan berhasil didaftarkan!";
+        return "Sukses: Employee berhasil didaftarkan! Email setup password sudah dikirim.";
     }
+
+    // --- FOKUS 3: SET PASSWORD ---
     @Transactional
-    public String setPasswordViaMagicLink(String token, String newPassword) {
-        // 4: Cari token di database
-        Employee employee = employeeRepository.findByMagicToken(token)
-                .orElseThrow(() -> new RuntimeException("Link tidak valid atau sudah pernah digunakan!"));
-
-        // 5: Cek apakah token sudah kedaluwarsa
-        if (employee.getMagicTokenExpiryAt().isBefore(LocalDateTime.now())) {
-            return "Gagal! Magic link sudah kedaluwarsa (lebih dari 24 jam).";
+    public String setPassword(SetPasswordDTO dto) {
+        // 1. Validasi password match
+        if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
+            throw new RuntimeException("Password baru dan konfirmasi tidak cocok!");
         }
 
-        // 6: Update password baru & ubah status jadi ACTIVE
-        employee.setPassword(newPassword); // Nanti di-hash pake BCrypt
+        // 2. Cari user berdasarkan token
+        Employee employee = employeeRepo.findByMagicToken(dto.getMagicToken())
+                .orElseThrow(() -> new RuntimeException("Token tidak valid atau sudah kedaluwarsa!"));
+
+        // 3. Update data
+        employee.setPassword(dto.getNewPassword()); // Nanti bisa ditambah hashing di sini
         employee.setAccountStatus("ACTIVE");
+        employee.setMagicToken(null); // Hapus token biar gak bisa dipake lagi
 
-        // 7: Hapus token agar tidak bisa dipakai lagi (Keamanan Utama!)
-        employee.setMagicToken(null);
-        employee.setMagicTokenExpiryAt(null);
-        employee.setUpdatedBy(employee.getEmployeeName());
+        // 4. Simpan
+        employeeRepo.save(employee);
 
-        employeeRepository.save(employee);
-        return "Password berhasil dibuat! Akun Anda sekarang berstatus ACTIVE.";
+        return "Password berhasil diset! Akun sekarang sudah aktif.";
     }
 
-    public String login(LoginRequest request) {
-        // 1. Cari user berdasarkan username
-        Employee employee = employeeRepository.findByUserName(request.getUserName())
-                .orElseThrow(() -> new RuntimeException("Gagal! Username tidak ditemukan."));
-
-        // 2. Cek apakah status akunnya ACTIVE
-        if (!employee.getAccountStatus().equals("ACTIVE")) {
-            return "Gagal login! Akun Anda saat ini berstatus: " + employee.getAccountStatus();
-        }
-
-        // 3. Cek Password (Sementara pakai pencocokan teks biasa karena belum di-hash)
-        if (!employee.getPassword().equals(request.getPassword())) {
-            return "Gagal! Password yang Anda masukkan salah.";
-        }
-
-        // 4. Kalau semua aman, kembalikan pesan sukses beserta Role-nya
-        return "Login sukses! Selamat datang, " + employee.getEmployeeName() + " (" + employee.getRole().getRoleName() + ")";
-    }
-
-    // --- FITUR LUPA PASSWORD: REQUEST OTP ---
-    public String requestOtp(String email) {
-        Employee employee = employeeRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Gagal! Email tidak terdaftar di sistem."));
-
-        // Generate 6 digit angka random
-        String otp = String.format("%06d", new java.util.Random().nextInt(999999));
-
-        // Simpan OTP dan set masa berlaku (misal: 10 menit)
-        employee.setOtpCode(otp);
-        employee.setOtpExpiryAt(LocalDateTime.now().plusMinutes(10));
-        employeeRepository.save(employee);
-
-        // KIRIM EMAIL OTP ASLI
-        try {
-            emailService.sendOtpEmail(employee.getEmail(), otp);
-            System.out.println("BERHASIL: Email OTP terkirim ke " + employee.getEmail());
-        } catch (Exception e) {
-            System.out.println("GAGAL: Error saat ngirim email OTP - " + e.getMessage());
-            throw new RuntimeException("Gagal mengirim email OTP ke " + employee.getEmail());
-        }
-
-        return "Kode OTP telah dikirim ke email Anda.";
-    }
-
-    // --- FITUR LUPA PASSWORD: RESET PASSWORD ---
-    public String resetPassword(ResetPasswordRequest request) {
-        Employee employee = employeeRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Gagal! Email tidak terdaftar."));
-
-        // Cek apakah OTP cocok
-        if (employee.getOtpCode() == null || !employee.getOtpCode().equals(request.getOtpCode())) {
-            return "Gagal! Kode OTP salah atau tidak valid.";
-        }
-
-        // Cek apakah OTP sudah kedaluwarsa
-        if (employee.getOtpExpiryAt().isBefore(LocalDateTime.now())) {
-            return "Gagal! Kode OTP sudah kedaluwarsa. Silakan minta kode baru.";
-        }
-
-        // Kalau aman, update password dan bersihkan sisa OTP di database
-        employee.setPassword(request.getNewPassword());
-        employee.setOtpCode(null);
-        employee.setOtpExpiryAt(null);
-        employeeRepository.save(employee);
-
-        return "Password berhasil diubah! Silakan login dengan password baru Anda.";
+    public List<LeadResponseDTO> getAllLeads() {
+        return employeeRepo.findByRole_RoleNameIgnoreCase("LEAD")
+                .stream()
+                .map(LeadResponseDTO::new)
+                .collect(Collectors.toList());
     }
 }

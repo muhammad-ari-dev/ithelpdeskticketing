@@ -3,7 +3,8 @@ package com.juaracoding.ITHelpdeskTicketing.dto;
 import lombok.Data;
 
 @Data
-public class SetPasswordRequest {
-    private String token;
+public class SetPasswordDTO {
+    private String magicToken;
     private String newPassword;
+    private String confirmPassword;
 }

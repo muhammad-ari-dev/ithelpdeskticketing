@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.UUID;
 
-public interface TicketRepository extends JpaRepository<Ticket, UUID> {
+public interface TicketRepo extends JpaRepository<Ticket, UUID> {
     // Mencari tiket berdasarkan status (Open, OnProgress, dll)
     List<Ticket> findByStatus(String status);
 

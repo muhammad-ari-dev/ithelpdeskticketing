@@ -1,12 +1,12 @@
 package com.juaracoding.ITHelpdeskTicketing.repository;
 
-import com.juaracoding.ITHelpdeskTicketing.model.TicketTimeline;
+import com.juaracoding.ITHelpdeskTicketing.model.TicketLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface TicketTimelineRepo extends JpaRepository<TicketTimeline, UUID> {
+public interface TicketLogRepo extends JpaRepository<TicketLog, UUID> {
     // Menampilkan semua timeline berdasarkan satu tiket tertentu (diurutkan dari yang terbaru)
-    List<TicketTimeline> findByTicket_IdOrderByCreatedAtDesc(UUID ticketId);
+    List<TicketLog> findByTicket_IdOrderByCreatedAtDesc(UUID ticketId);
 }

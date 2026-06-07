@@ -127,7 +127,7 @@ public class AuthService implements UserDetailsService {
         employee.setRole(role);
 
         // 4. Logika Hierarki (Lead vs Staff)
-        if ("ADMINISTRATOR".equalsIgnoreCase(role.getRoleName()) || "LEAD".equalsIgnoreCase(role.getRoleName())) {
+        if ("LEAD".equalsIgnoreCase(role.getRoleName())) {
             employee.setLead(null);
         } else {
             if (dto.getLeadID() == null || dto.getLeadID().isEmpty()) {
@@ -140,11 +140,8 @@ public class AuthService implements UserDetailsService {
         }
 
         // 5. Setup Status
-        if("ADMINISTRATOR".equalsIgnoreCase(role.getRoleName())){
-            employee.setAccountStatus("ACTIVE");
-        } else {
-            employee.setAccountStatus("PENDING");
-        }
+        employee.setAccountStatus("PENDING");
+
         String token = UUID.randomUUID().toString();
         employee.setMagicToken(token);
 

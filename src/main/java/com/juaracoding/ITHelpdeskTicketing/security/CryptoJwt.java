@@ -9,7 +9,7 @@ import org.bouncycastle.util.encoders.Hex;
 
 public class CryptoJwt {
 
-    private static final String defaultKey = "f6a06001cdeead5ce4de3776b6853f7542fdcf982f2b796f452cb417449116fd";
+    private static final String defaultKey = "efa3629b49a32955eb6ca21b071837c3759700cb923822e3cd55f6ae83ac5e47";
 
 //    public static String getKey(){
 //        return defaultKey;

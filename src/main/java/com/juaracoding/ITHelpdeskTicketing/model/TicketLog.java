@@ -7,10 +7,10 @@ import lombok.Setter;
 
 
 @Entity
-@Table(name = "TicketTimeline",schema = "helpdesk")
+@Table(name = "TicketLog",schema = "helpdesk")
 @Getter
 @Setter
-public class TicketTimeline extends BaseEntity {
+public class TicketLog extends BaseEntity {
 
 
     @Column(name = "Status", nullable = false, length = 64)

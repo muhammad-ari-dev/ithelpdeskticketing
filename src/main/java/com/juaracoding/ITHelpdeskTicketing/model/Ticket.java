@@ -36,7 +36,7 @@ public class Ticket extends BaseEntity {
     private Employee assignedEmployee;
 
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<TicketTimeline> timelines = new ArrayList<>();
+    private List<TicketLog> timelines = new ArrayList<>();
 
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Evidence> evidences = new ArrayList<>();

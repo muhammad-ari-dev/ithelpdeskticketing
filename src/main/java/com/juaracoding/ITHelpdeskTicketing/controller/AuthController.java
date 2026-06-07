@@ -5,6 +5,8 @@ import com.juaracoding.ITHelpdeskTicketing.dto.LoginResponseDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.RegisDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.SetPasswordDTO;
 import com.juaracoding.ITHelpdeskTicketing.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,13 +23,9 @@ public class AuthController {
     // FOKUS 1: GERBANG LOGIN
     // ==========================================
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginDTO request) {
-        try {
-            LoginResponseDTO result = authService.login(request);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Object> login(@Valid @RequestBody LoginDTO loginDTO,
+                                        HttpServletRequest request) {
+        return authService.login(authService.mapToEntity(loginDTO), request);
     }
 
     @PostMapping("/register")

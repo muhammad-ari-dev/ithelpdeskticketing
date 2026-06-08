@@ -62,10 +62,14 @@ jobs:
             # Pull image terbaru
             docker pull ${{ secrets.DOCKER_USERNAME }}/ithelpdesk:latest
 
-            # Jalankan container baru (host:8077 → container:8080)
+            # Cek network yang dipakai sqlserver-juara
+            DOCKER_NET=$(docker inspect sqlserver-juara --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' 2>/dev/null || echo "bridge")
+
+            # Jalankan container baru (host:8090 → container:8080)
             docker run -d \
               --name ithelpdesk \
               --restart unless-stopped \
+              --network "$DOCKER_NET" \
               -p 8090:8080 \
               -e "DB_URL=${{ secrets.DEVOPS_JC_URL }}" \
               -e "DB_USERNAME=${{ secrets.DEVOPS_JC_USERNAME }}" \

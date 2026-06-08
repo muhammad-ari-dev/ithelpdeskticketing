@@ -54,16 +54,19 @@ jobs:
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PAT }}
             docker pull ${{ secrets.DOCKER_USERNAME }}/ithelpdesk:latest
 
-            # Stop & hapus container lama (by name)
+            # Stop & hapus semua container yang pakai port 8080
+            docker ps -q --filter "publish=8080" | xargs -r docker stop 2>/dev/null || true
+            docker ps -aq --filter "publish=8080" | xargs -r docker rm  2>/dev/null || true
+
+            # Stop & hapus container by name jika masih ada
             docker stop ithelpdesk 2>/dev/null || true
             docker rm   ithelpdesk 2>/dev/null || true
 
-            # Stop container lain yang mungkin memakai port 8080
-            docker ps -q --filter "publish=8080" | xargs -r docker stop
-            docker ps -aq --filter "publish=8080" | xargs -r docker rm
+            # Paksa kill semua proses yang masih memegang port 8080
+            lsof -ti:8080 | xargs -r kill -9 2>/dev/null || true
 
-            # Kill proses non-docker yang pakai port 8080
-            fuser -k 8080/tcp 2>/dev/null || true
+            # Tunggu port benar-benar bebas
+            sleep 3
 
             # Jalankan container baru
             docker run -d \

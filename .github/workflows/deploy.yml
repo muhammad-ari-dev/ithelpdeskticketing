@@ -66,7 +66,7 @@ jobs:
             docker run -d \
               --name ithelpdesk \
               --restart unless-stopped \
-              -p 8080:8080 \
+              -p 8090:8080 \
               -e DB_URL="${{ secrets.DEVOPS_JC_URL }}" \
               -e DB_USERNAME="${{ secrets.DEVOPS_JC_USERNAME }}" \
               -e DB_PASSWORD="${{ secrets.DEVOPS_JC_PASSWORD }}" \

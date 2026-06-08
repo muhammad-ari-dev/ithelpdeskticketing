@@ -92,8 +92,10 @@ public class AuthService implements UserDetailsService {
         }
         Map<String,Object> mapResponse = new HashMap<>();
         mapResponse.put("token", token);
+        mapResponse.put("id", employeeDb.getId());
         mapResponse.put("nama", employeeDb.getEmployeeName());
         mapResponse.put("username", employeeDb.getUserName());
+        mapResponse.put("email", employeeDb.getEmail());
         mapResponse.put("role", employeeDb.getRole());
         return new ResponseHandler().
                 handleResponse(ConstantMessage.SUCCESS_LOGIN, HttpStatus.OK, mapResponse,request);

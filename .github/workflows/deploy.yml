@@ -10,7 +10,7 @@ jobs:
   build-push-deploy:
     name: Build, Push & Deploy
     runs-on: ubuntu-latest
-    environment: production
+    environment: IT-HELPDESK
 
     steps:
       # ─── 1. Checkout ────────────────────────────────────────────────
@@ -50,27 +50,24 @@ jobs:
           key: ${{ secrets.DEVOPS_SSH_KEY }}
           passphrase: ${{ secrets.DEVOPS_PHRASE }}
           script: |
-            # Pull image terbaru
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PAT }}
+
+            # Stop & hapus container
+            docker rm -f ithelpdesk 2>/dev/null || true
+            docker ps -aq --filter "publish=8077" | xargs -r docker rm -f 2>/dev/null || true
+
+            # Hapus image lama
+            docker rmi ${{ secrets.DOCKER_USERNAME }}/ithelpdesk:latest 2>/dev/null || true
+
+            # Pull image terbaru
             docker pull ${{ secrets.DOCKER_USERNAME }}/ithelpdesk:latest
 
-            # Force remove semua container (stop + remove sekaligus)
-            docker rm -f ithelpdesk 2>/dev/null || true
-            docker ps -aq --filter "publish=8080" | xargs -r docker rm -f 2>/dev/null || true
-
-            # Kill proses non-Docker yang masih pakai port 8080
-            lsof -ti:8080 | xargs -r kill -9 2>/dev/null || true
-            sleep 2
-
-            # Jalankan container baru
+            # Jalankan container baru (host:8077 → container:8080)
             docker run -d \
               --name ithelpdesk \
               --restart unless-stopped \
-              -p 8090:8080 \
-              -e DB_URL="${{ secrets.DEVOPS_JC_URL }}" \
-              -e DB_USERNAME="${{ secrets.DEVOPS_JC_USERNAME }}" \
-              -e DB_PASSWORD="${{ secrets.DEVOPS_JC_PASSWORD }}" \
+              -p 8077:8080 \
+              -e "DB_URL=${{ secrets.DEVOPS_JC_URL }}" \
+              -e "DB_USERNAME=${{ secrets.DEVOPS_JC_USERNAME }}" \
+              -e "DB_PASSWORD=${{ secrets.DEVOPS_JC_PASSWORD }}" \
               ${{ secrets.DOCKER_USERNAME }}/ithelpdesk:latest
-
-            # Bersihkan image lama
-            docker image prune -f

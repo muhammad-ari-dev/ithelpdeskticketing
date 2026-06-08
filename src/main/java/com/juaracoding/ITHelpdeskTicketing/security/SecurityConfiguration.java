@@ -40,7 +40,8 @@ public class SecurityConfiguration {
         http.
             csrf(AbstractHttpConfigurer::disable).
             authorizeHttpRequests(request->request.requestMatchers(
-                "/api/auth/**"
+                    "/api/test/running"
+                    ,"/api/auth/**"
                 ,"/swagger-ui/**"
                 ,"/v3/api-docs/**"
             ).permitAll().anyRequest().authenticated()).

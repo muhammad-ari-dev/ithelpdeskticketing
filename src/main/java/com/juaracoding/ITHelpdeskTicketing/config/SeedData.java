@@ -21,46 +21,46 @@ public class SeedData implements CommandLineRunner{
     @Override
     public void run(String... args) throws Exception {
 
-        if(roleRepo.count() == 0) {
-
-            Role administrator = new Role();
-            Role lead = new Role();
-            Role employee = new Role();
-
-            administrator.setRoleName("ADMINISTRATOR");
-            administrator.setCreatedBy("SYSTEM");
-
-            lead.setRoleName("LEAD");
-            lead.setCreatedBy("SYSTEM");
-
-            employee.setRoleName("EMPLOYEE");
-            employee.setCreatedBy("SYSTEM");
-
-            roleRepo.save(administrator);
-            roleRepo.save(lead);
-            roleRepo.save(employee);
-
-        }
-
-        if (!employeeRepo.existsByEmail("admin.123@gmail.com")) {
-
-            Role roleAdmin = roleRepo.findByRoleName("ADMINISTRATOR")
-                    .orElseThrow(() -> new RuntimeException("Administrator Role not found!"));
-
-            Employee admin = new Employee();
-
-            admin.setEmployeeName("Admin");
-            admin.setUserName("admin.123");
-            admin.setEmail("admin.123@gmail.com");
-            admin.setNoHp("08123456789");
-            admin.setPassword(BcryptImpl.hash(admin.getUserName() + "admin@123"));
-            admin.setLead(null);
-            admin.setAccountStatus("ACTIVE");
-            admin.setRole(roleAdmin);
-            admin.setCreatedBy("SYSTEM");
-
-            employeeRepo.save(admin);
-
-        }
+//        if(roleRepo.count() == 0) {
+//
+//            Role administrator = new Role();
+//            Role lead = new Role();
+//            Role employee = new Role();
+//
+//            administrator.setRoleName("ADMINISTRATOR");
+//            administrator.setCreatedBy("SYSTEM");
+//
+//            lead.setRoleName("LEAD");
+//            lead.setCreatedBy("SYSTEM");
+//
+//            employee.setRoleName("EMPLOYEE");
+//            employee.setCreatedBy("SYSTEM");
+//
+//            roleRepo.save(administrator);
+//            roleRepo.save(lead);
+//            roleRepo.save(employee);
+//
+//        }
+//
+//        if (!employeeRepo.existsByEmail("admin.123@gmail.com")) {
+//
+//            Role roleAdmin = roleRepo.findByRoleName("ADMINISTRATOR")
+//                    .orElseThrow(() -> new RuntimeException("Administrator Role not found!"));
+//
+//            Employee admin = new Employee();
+//
+//            admin.setEmployeeName("Admin");
+//            admin.setUserName("admin.123");
+//            admin.setEmail("admin.123@gmail.com");
+//            admin.setNoHp("08123456789");
+//            admin.setPassword(BcryptImpl.hash(admin.getUserName() + "admin@123"));
+//            admin.setLead(null);
+//            admin.setAccountStatus("ACTIVE");
+//            admin.setRole(roleAdmin);
+//            admin.setCreatedBy("SYSTEM");
+//
+//            employeeRepo.save(admin);
+//
+//        }
     }
 }

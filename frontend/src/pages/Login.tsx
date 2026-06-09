@@ -44,7 +44,9 @@ export default function Login() {
           userName: userData.username,
           email: userData.email,
           role: userData.role?.roleName, // "ADMINISTRATOR", "LEAD", "EMPLOYEE"
+          role_desc: userData.role_desc,
           token: userData.token, // Menyimpan token JWT
+          created_at: userData.created_at
         }),
       );
 

@@ -1,0 +1,151 @@
+# QUICK REFERENCE - React Context API
+
+## 🚀 SETUP (3 Langkah)
+
+1. **App.tsx** - Import & Wrap AppProvider
+```tsx
+import { AppProvider } from './context/AppContext';
+
+export default function App() {
+    return (
+        <AppProvider>
+            <Router>...</Router>
+        </AppProvider>
+    );
+}
+```
+
+2. **Di Component** - Import Hook
+```tsx
+import { useAppContext } from '../context/AppContext';
+
+function MyComponent() {
+    const { users, currentUser, addUser } = useAppContext();
+}
+```
+
+3. **Gunakan Functions** - Sesuai kebutuhan
+
+---
+
+## 📚 Available Functions
+
+### Data
+- `users` - Semua users (auto-sync localStorage)
+- `currentUser` - User yang login (null jika belum)
+
+### Add/Update
+- `addUser(userData)` → `{success, message}` ✅ Validasi auto
+- `updateUser(id, data)` → void
+- `changeUserStatus(id, status)` → void
+
+### Filter/Get
+- `getStaffsByLeader(leaderId)` → User[]
+- `getHeadITList()` → User[] (semua HEAD_IT)
+- `getStaffITList()` → User[] (semua STAFF_IT)
+- `getUserById(id)` → User | undefined
+
+### Auth
+- `setCurrentUser(user)` → void (saat login)
+- `logout()` → void (clear semua)
+
+---
+
+## 💡 Common Usage
+
+**Add User dengan validasi:**
+```tsx
+const result = addUser({
+    namaLengkap: 'John',
+    username: 'john.doe', // Auto cek duplikasi
+    email: 'john@mail.com', // Auto cek duplikasi
+    noTelepon: '081234',
+    role: 'STAFF_IT',
+    status: 'ACTIVE',
+    leaderId: 'USR001'
+});
+
+if (result.success) alert(result.message);
+else alert('ERROR: ' + result.message);
+```
+
+**Filter staff by leader:**
+```tsx
+useEffect(() => {
+    if (currentUser?.role === 'HEAD_IT') {
+        const staffs = getStaffsByLeader(currentUser.id);
+        setAssignedStaffs(staffs);
+    }
+}, [currentUser, getStaffsByLeader]);
+```
+
+**Login & set user:**
+```tsx
+const foundUser = users.find(u => u.username === username);
+if (foundUser) {
+    setCurrentUser({
+        id: foundUser.id,
+        username: foundUser.username,
+        role: foundUser.role,
+        namaLengkap: foundUser.namaLengkap
+    });
+    navigate('/dashboard');
+}
+```
+
+---
+
+## ⚠️ Common Mistakes
+
+❌ Tidak wrap AppProvider
+→ ✅ `<AppProvider><Router>...</Router></AppProvider>`
+
+❌ Dependency array kosong di useEffect
+→ ✅ `useEffect(() => {...}, [currentUser, getStaffsByLeader])`
+
+❌ Manual filter users
+→ ✅ Gunakan `getStaffsByLeader()` dkk.
+
+❌ Tidak handle result dari addUser()
+→ ✅ Check `if (result.success)...`
+
+---
+
+## 📊 Default Data
+
+- 9 users (3 HEAD_IT, 6 STAFF_IT)
+- Auto-persist ke localStorage
+- Leaders: Ariana, Jamaludin, Febrian
+- Staffs: Di-assign ke leaders
+
+---
+
+## 🔍 Debug Tips
+
+Console:
+```tsx
+const { users, currentUser } = useAppContext();
+console.log(users);      // Check all users
+console.log(currentUser); // Check logged in user
+```
+
+localStorage:
+```
+DevTools → Application → Local Storage
+- 'itTicketing_users'        (semua users)
+- 'itTicketing_currentUser'  (user login)
+```
+
+---
+
+## ✓ Checklist
+
+- [ ] AppProvider di App.tsx
+- [ ] useAppContext di component
+- [ ] Form handler gunakan addUser()
+- [ ] Filter gunakan helper function
+- [ ] Dependency array benar
+- [ ] Error handling untuk result
+- [ ] localStorage check
+- [ ] No console errors
+

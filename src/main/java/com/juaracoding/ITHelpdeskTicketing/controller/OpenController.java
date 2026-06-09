@@ -10,6 +10,6 @@ public class OpenController {
 
     @GetMapping("/running")
     public String check(){
-        return "running . . .";
+        return "running nih kawan";
     }
 }

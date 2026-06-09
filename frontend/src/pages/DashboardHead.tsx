@@ -283,13 +283,13 @@ export default function DashboardHead() {
                 Welcome Back
               </p>
               <p className="text-sm font-extrabold text-slate-800">
-                {currentUser.username}
+                {currentUser.name}
               </p>
             </div>
             <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center p-0.5 shadow-inner">
               <img
                 src={
-                  users.find((u) => u.name === currentUser.username)?.avatar ||
+                  users.find((u) => u.name === currentUser.name)?.avatar ||
                   "https://i.pravatar.cc/150?img=68"
                 }
                 alt="User"
@@ -337,14 +337,14 @@ export default function DashboardHead() {
           >
             <div className="text-right hidden sm:block">
               <p className="text-slate-800 font-extrabold text-xs leading-none">
-                {currentUser.username}
+                {currentUser.name}
               </p>
               <p className="text-blue-500 text-[10px] font-bold mt-1">
                 Head IT
               </p>
             </div>
             <div className="w-8 h-8 bg-blue-600/90 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-inner">
-              {currentUser.username.charAt(0).toUpperCase()}
+              {currentUser.name.charAt(0).toUpperCase()}
             </div>
           </div>
         </header>

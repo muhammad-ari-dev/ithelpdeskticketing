@@ -14,7 +14,10 @@ import TambahUser from '../pages/TambahUser';
 import Profile from '../pages/Profile';
 import PageTransition from './PageTransition';
 import SetPassword from "../pages/SetPassword";
+
+// Route Guards
 import PrivateRoute from './PrivateRoute';
+import PublicRoute from './PublicRoute'; // Imported the clean, matching PublicRoute
 
 export default function AnimatedRoutes() {
     const location = useLocation();
@@ -24,13 +27,20 @@ export default function AnimatedRoutes() {
             <Routes location={location} key={location.pathname}>
                 {/* Public routes */}
                 <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
-                <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
+                
+                {/* Protected from logged-in users: redirects active sessions back to their dashboard */}
+                <Route path="/login" element={
+                    <PublicRoute>
+                        <PageTransition><Login /></PageTransition>
+                    </PublicRoute>
+                } />
+                
                 <Route path="/register" element={<Navigate to="/login" replace />} />
                 <Route path="/set-password" element={<SetPassword />} />
 
-                {/* Protected: HEAD_IT only */}
+                {/* Protected: LEAD only */}
                 <Route path="/dashboard" element={
-                    <PrivateRoute allowedRoles={['HEAD_IT']}>
+                    <PrivateRoute allowedRoles={['LEAD']}>
                         <PageTransition><DashboardHead /></PageTransition>
                     </PrivateRoute>
                 } />
@@ -49,24 +59,24 @@ export default function AnimatedRoutes() {
                     </PrivateRoute>
                 } />
 
-                {/* Protected: HEAD_IT & ADMIN */}
+                {/* Protected: LEAD & ADMINISTRATOR */}
                 <Route path="/buat-tiket" element={
-                    <PrivateRoute allowedRoles={['HEAD_IT', 'ADMIN']}>
+                    <PrivateRoute allowedRoles={['LEAD', 'ADMINISTRATOR']}>
                         <PageTransition><BuatTiket /></PageTransition>
                     </PrivateRoute>
                 } />
                 <Route path="/teknisi" element={
-                    <PrivateRoute allowedRoles={['HEAD_IT', 'ADMIN']}>
+                    <PrivateRoute allowedRoles={['LEAD', 'ADMINISTRATOR']}>
                         <PageTransition><Teknisi /></PageTransition>
                     </PrivateRoute>
                 } />
                 <Route path="/lihat-tiket" element={
-                    <PrivateRoute allowedRoles={['HEAD_IT', 'ADMIN']}>
+                    <PrivateRoute allowedRoles={['LEAD', 'ADMINISTRATOR']}>
                         <PageTransition><LihatTiket /></PageTransition>
                     </PrivateRoute>
                 } />
                 <Route path="/tambah-user" element={
-                    <PrivateRoute allowedRoles={['ADMIN']}>
+                    <PrivateRoute allowedRoles={['ADMINISTRATOR']}>
                         <PageTransition><TambahUser /></PageTransition>
                     </PrivateRoute>
                 } />
@@ -85,5 +95,4 @@ export default function AnimatedRoutes() {
             </Routes>
         </AnimatePresence>
     );
-
 }

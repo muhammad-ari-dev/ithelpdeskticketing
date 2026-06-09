@@ -40,7 +40,7 @@ export default function Login() {
         "currentUser",
         JSON.stringify({
           id: userData.id,
-          username: userData.nama, // Di frontend, "username" digunakan untuk display nama
+          name: userData.nama,
           userName: userData.username,
           email: userData.email,
           role: userData.role?.roleName, // "ADMINISTRATOR", "LEAD", "EMPLOYEE"

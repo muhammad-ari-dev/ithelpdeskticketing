@@ -40,10 +40,12 @@ public class SecurityConfiguration {
         http.
             csrf(AbstractHttpConfigurer::disable).
             authorizeHttpRequests(request->request.requestMatchers(
-        "/api/test/running"
+                "/api/test/running"
                 ,"/api/auth/**"
                 ,"/swagger-ui/**"
                 ,"/v3/api-docs/**"
+                ,"/swagger-ui.html"
+                ,"/error"
             ).permitAll().anyRequest().authenticated()).
             authenticationProvider(authenticationProvider()).
             sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS)).

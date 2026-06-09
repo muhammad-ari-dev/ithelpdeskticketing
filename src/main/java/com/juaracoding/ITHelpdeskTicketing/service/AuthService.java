@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 
 import com.juaracoding.ITHelpdeskTicketing.dto.LeadResponseDTO;
 
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -77,6 +78,8 @@ public class AuthService implements UserDetailsService {
         if(!employeeDb.getAccountStatus().equals("ACTIVE")){
             throw new UsernameNotFoundException(ConstantMessage.ACCOUNT_NOT_ACTIVE);
         }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", java.util.Locale.ENGLISH);
+        String formattedDate = employeeDb.getCreatedAt().format(formatter);
         /** PAYLOAD */
         Map<String,Object> claims = new HashMap<>();
         claims.put("id", employeeDb.getId());
@@ -86,6 +89,8 @@ public class AuthService implements UserDetailsService {
         claims.put("no_hp", employeeDb.getNoHp());
         claims.put("role", employeeDb.getRole().getRoleName());
         claims.put("lead_id", employeeDb.getLead());
+        claims.put("role_desc", employeeDb.getRole().getRoleDesc());
+        claims.put("created_at", formattedDate);
         String token = jwtUtility.doGenerateToken(claims, employeeDb.getUserName());
         if(JwtConfig.getTokenEncryptEnable().equals("y")){
             token = CryptoJwt.performEncrypt(token);
@@ -97,6 +102,8 @@ public class AuthService implements UserDetailsService {
         mapResponse.put("username", employeeDb.getUserName());
         mapResponse.put("email", employeeDb.getEmail());
         mapResponse.put("role", employeeDb.getRole());
+        mapResponse.put("role_desc", employeeDb.getRole().getRoleDesc());
+        mapResponse.put("created_at", formattedDate);
         return new ResponseHandler().
                 handleResponse(ConstantMessage.SUCCESS_LOGIN, HttpStatus.OK, mapResponse,request);
     }

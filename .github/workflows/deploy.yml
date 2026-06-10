@@ -54,7 +54,7 @@ jobs:
 
             # Stop & hapus container
             docker rm -f ithelpdesk 2>/dev/null || true
-            docker ps -aq --filter "publish=8077" | xargs -r docker rm -f 2>/dev/null || true
+            docker ps -aq --filter "publish=8090" | xargs -r docker rm -f 2>/dev/null || true
 
             # Hapus image lama
             docker rmi ${{ secrets.DOCKER_USERNAME }}/ithelpdesk:latest 2>/dev/null || true

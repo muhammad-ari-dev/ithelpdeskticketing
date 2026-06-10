@@ -63,13 +63,17 @@ public class SecurityConfiguration {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(request -> request.requestMatchers(
-                "/api/test/running",
-                "/api/auth/**",
-                "/swagger-ui/**",
+            .authorizeHttpRequests(request -> request
+                .requestMatchers(
+                    "/api/test/running",
+                    "/api/auth/**",
+                    "/swagger-ui/**",
                     "/swagger-ui.html",
-                "/v3/api-docs/**"
-            ).permitAll().anyRequest().authenticated())
+                    "/v3/api-docs/**"
+                ).permitAll()
+                .requestMatchers("/api/**").authenticated()
+                .anyRequest().permitAll()
+            )
             .authenticationProvider(authenticationProvider())
             .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);

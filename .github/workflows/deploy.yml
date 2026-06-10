@@ -28,8 +28,8 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PAT }}
 
-      # ─── 4. Build & Push image (backend + frontend bundled) ─────────
-      - name: Build and push image
+      # ─── 4. Build & Push Backend image ─────────────────────────────
+      - name: Build and push Backend image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -37,10 +37,23 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/ithelpdesk:latest
             ${{ secrets.DOCKER_USERNAME }}/ithelpdesk:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
 
-      # ─── 5. Deploy via SSH ──────────────────────────────────────────
+      # ─── 5. Build & Push Frontend image ────────────────────────────
+      - name: Build and push Frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/ithelpdesk-web:latest
+            ${{ secrets.DOCKER_USERNAME }}/ithelpdesk-web:${{ github.sha }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+      # ─── 6. Deploy via SSH ──────────────────────────────────────────
       - name: Deploy to DevOps Server
         uses: appleboy/ssh-action@v1
         with:
@@ -52,21 +65,33 @@ jobs:
           script: |
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PAT }}
 
-            docker rm -f ithelpdesk 2>/dev/null || true
-            docker rm -f ithelpdesk-web 2>/dev/null || true
-            docker ps -aq --filter "publish=8090" | xargs -r docker rm -f 2>/dev/null || true
+            # Deteksi network dari sqlserver-juara
+            DOCKER_NET=$(docker inspect sqlserver-juara --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' 2>/dev/null || echo "bridge")
 
+            # ── Backend (internal only, tanpa host port) ──────────────
+            docker rm -f ithelpdesk-backend 2>/dev/null || true
+            docker rm -f ithelpdesk 2>/dev/null || true
             docker rmi ${{ secrets.DOCKER_USERNAME }}/ithelpdesk:latest 2>/dev/null || true
             docker pull ${{ secrets.DOCKER_USERNAME }}/ithelpdesk:latest
 
-            DOCKER_NET=$(docker inspect sqlserver-juara --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' 2>/dev/null || echo "bridge")
-
             docker run -d \
-              --name ithelpdesk \
+              --name ithelpdesk-backend \
               --restart unless-stopped \
               --network "$DOCKER_NET" \
-              -p 8090:8080 \
               -e "DB_URL=${{ secrets.DEVOPS_JC_URL }}" \
               -e "DB_USERNAME=${{ secrets.DEVOPS_JC_USERNAME }}" \
               -e "DB_PASSWORD=${{ secrets.DEVOPS_JC_PASSWORD }}" \
               ${{ secrets.DOCKER_USERNAME }}/ithelpdesk:latest
+
+            # ── Frontend nginx (port 8090, proxy ke backend internal) ─
+            docker rm -f ithelpdesk-web 2>/dev/null || true
+            docker ps -aq --filter "publish=8090" | xargs -r docker rm -f 2>/dev/null || true
+            docker rmi ${{ secrets.DOCKER_USERNAME }}/ithelpdesk-web:latest 2>/dev/null || true
+            docker pull ${{ secrets.DOCKER_USERNAME }}/ithelpdesk-web:latest
+
+            docker run -d \
+              --name ithelpdesk-web \
+              --restart unless-stopped \
+              --network "$DOCKER_NET" \
+              -p 8090:80 \
+              ${{ secrets.DOCKER_USERNAME }}/ithelpdesk-web:latest

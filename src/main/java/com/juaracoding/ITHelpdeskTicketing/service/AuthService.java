@@ -88,7 +88,9 @@ public class AuthService implements UserDetailsService {
         claims.put("email", employeeDb.getEmail());
         claims.put("no_hp", employeeDb.getNoHp());
         claims.put("role", employeeDb.getRole().getRoleName());
-        claims.put("lead_id", employeeDb.getLead());
+        claims.put("lead_id", employeeDb.getLead() != null
+                ? employeeDb.getLead().getId()
+                : null);
         claims.put("role_desc", employeeDb.getRole().getRoleDesc());
         claims.put("created_at", formattedDate);
         String token = jwtUtility.doGenerateToken(claims, employeeDb.getUserName());

@@ -12,6 +12,11 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -36,18 +41,36 @@ public class SecurityConfiguration {
      */
 
     @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of(
+            "http://localhost:5173",
+            "http://localhost:3000",
+            "http://103.164.191.212:8090",
+            "http://103.164.191.212"
+        ));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtFilter filter) throws Exception {
-        http.
-            csrf(AbstractHttpConfigurer::disable).
-            authorizeHttpRequests(request->request.requestMatchers(
-        "/api/test/running"
-                ,"/api/auth/**"
-                ,"/swagger-ui/**"
-                ,"/v3/api-docs/**"
-            ).permitAll().anyRequest().authenticated()).
-            authenticationProvider(authenticationProvider()).
-            sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS)).
-            addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
+        http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(request -> request.requestMatchers(
+                "/api/test/running",
+                "/api/auth/**",
+                "/swagger-ui/**",
+                "/v3/api-docs/**"
+            ).permitAll().anyRequest().authenticated())
+            .authenticationProvider(authenticationProvider())
+            .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }

@@ -373,7 +373,7 @@ export default function Login() {
                   />
                 </svg>
                 <p className="text-[11px] font-semibold text-blue-500 leading-relaxed">
-                  Pendaftaran akun dilakukan oleh <strong>Admin</strong>.
+                  Pendaftaran akun dilakukan oleh <strong>Abang Hakimmmm</strong>.
                   Hubungi Admin IT Anda jika belum memiliki akun.
                 </p>
               </div>

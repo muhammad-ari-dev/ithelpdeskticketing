@@ -221,7 +221,7 @@ export default function DashboardAdmin() {
                                 </svg>
                             </div>
 
-                            <button
+                            {/* <button
                                 onClick={() => navigate('/tambah-user')}
                                 className="bg-[#3B82F6] hover:bg-[#2563EB] text-white px-5 py-2.5 rounded-full flex items-center gap-2 shadow-[0_4px_14px_rgba(59,130,246,0.3)] transition-all font-bold text-sm active:scale-95"
                             >
@@ -229,7 +229,7 @@ export default function DashboardAdmin() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                                 </svg>
                                 Tambah User
-                            </button>
+                            </button> */}
                         </div>
 
                         <div className="hidden md:flex items-center gap-4 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-2xl border border-slate-200/60 shadow-sm">

@@ -14,8 +14,8 @@ function getSession() {
 /**
  * PrivateRoute — guards protected pages.
  *
- * - If no session exists → redirect to /login
- * - If allowedRoles is specified and user role doesn't match → redirect to /login
+ * - If no session exists → redirect to /
+ * - If allowedRoles is specified and user role doesn't match → redirect to /
  * - Also listens for browser Back/Forward (bfcache pageshow) events to re-validate
  */
 export default function PrivateRoute({ children, allowedRoles }: PrivateRouteProps) {
@@ -28,7 +28,7 @@ export default function PrivateRoute({ children, allowedRoles }: PrivateRoutePro
                 // Page was restored from bfcache — re-validate session
                 const session = getSession();
                 if (!session) {
-                    window.location.replace('/login');
+                    window.location.replace('/');
                 }
             }
         };
@@ -40,12 +40,12 @@ export default function PrivateRoute({ children, allowedRoles }: PrivateRoutePro
 
     if (!session) {
         // Not logged in → go to login, remember where they were trying to go
-        return <Navigate to="/login" state={{ from: location }} replace />;
+        return <Navigate to="/" state={{ from: location }} replace />;
     }
 
     if (allowedRoles && !allowedRoles.includes(session.role)) {
         // Logged in but wrong role → redirect to login
-        return <Navigate to="/login" replace />;
+        return <Navigate to="/" replace />;
     }
 
     return <>{children}</>;

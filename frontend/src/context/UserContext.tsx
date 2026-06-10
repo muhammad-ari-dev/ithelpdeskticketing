@@ -10,6 +10,7 @@ export interface User {
     email: string;
     phone: string;
     role: 'Head IT' | 'Staff IT' | 'ADMIN';
+    role_desc: string;
     staffIds: string[];
     leaderId: string | null;
     joinDate: string;
@@ -100,6 +101,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             email: userData.email,
             phone: userData.phone,
             role: userData.role,
+            role_desc: userData.role_desc,
             staffIds: userData.staffIds || [],
             leaderId: userData.leaderId || null,
             joinDate: formattedJoinDate,

@@ -1,7 +1,6 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 
-import LandingPage from '../pages/LandingPage';
 import Login from '../pages/Login';
 import DashboardHead from '../pages/DashboardHead';
 import DashboardAdmin from '../pages/DashboardAdmin';
@@ -26,16 +25,16 @@ export default function AnimatedRoutes() {
         <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
                 {/* Public routes */}
-                <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
+                {/* <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} /> */}
                 
                 {/* Protected from logged-in users: redirects active sessions back to their dashboard */}
-                <Route path="/login" element={
+                <Route path="/" element={
                     <PublicRoute>
                         <PageTransition><Login /></PageTransition>
                     </PublicRoute>
                 } />
                 
-                <Route path="/register" element={<Navigate to="/login" replace />} />
+                <Route path="/register" element={<Navigate to="/" replace />} />
                 <Route path="/set-password" element={<SetPassword />} />
 
                 {/* Protected: LEAD only */}

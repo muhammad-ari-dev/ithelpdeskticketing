@@ -16,18 +16,19 @@ export default function Profile() {
     if (!user && currentUserSession?.id) {
         user = {
             id: currentUserSession.id,
-            name: currentUserSession.username || 'System Administrator',
-            username: currentUserSession.id || 'admin',
+            name: currentUserSession.name || 'System Administrator',
+            username: currentUserSession.userName || 'admin',
             role: currentUserSession.role || 'ADMIN',
+            role_desc: currentUserSession.role_desc,
             avatar: 'https://i.pravatar.cc/150?img=68',
-            joinDate: 'Sistem Inti',
+            joinDate: currentUserSession.created_at,
             status: 'Aktif',
-            email: 'admin@system.local',
+            email: currentUserSession.email,
             phone: '-',
             staffIds: [],
             leaderId: null,
             password: 'admin',
-            points: 0
+            points: 0,
         };
     }
 
@@ -114,7 +115,9 @@ export default function Profile() {
                                 <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                                 Informasi Pekerjaan
                             </h3>
-                            
+                            <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2 ms-7">
+                                {user.role_desc}
+                            </h3>
                             {user.role === 'Staff IT' && (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col items-center justify-center text-center">

@@ -46,6 +46,7 @@ public class SecurityConfiguration {
         config.setAllowedOrigins(List.of(
             "http://localhost:5173",
             "http://localhost:3000",
+            "http://103.164.191.212:3000",
             "http://103.164.191.212:8090",
             "http://103.164.191.212"
         ));

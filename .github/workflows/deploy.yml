@@ -87,12 +87,12 @@ jobs:
 
             # ── Frontend ─────────────────────────────────────────────
             docker rm -f ithelpdesk-web 2>/dev/null || true
-            docker ps -aq --filter "publish=80" | xargs -r docker rm -f 2>/dev/null || true
+            docker ps -aq --filter "publish=3000" | xargs -r docker rm -f 2>/dev/null || true
             docker rmi ${{ secrets.DOCKER_USERNAME }}/ithelpdesk-web:latest 2>/dev/null || true
             docker pull ${{ secrets.DOCKER_USERNAME }}/ithelpdesk-web:latest
 
             docker run -d \
               --name ithelpdesk-web \
               --restart unless-stopped \
-              -p 80:80 \
+              -p 3000:80 \
               ${{ secrets.DOCKER_USERNAME }}/ithelpdesk-web:latest

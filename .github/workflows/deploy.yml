@@ -28,8 +28,8 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PAT }}
 
-      # ─── 4. Build & Push Backend image ─────────────────────────────
-      - name: Build and push Backend image
+      # ─── 4. Build & Push image (backend + frontend bundled) ─────────
+      - name: Build and push image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -37,25 +37,10 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/ithelpdesk:latest
             ${{ secrets.DOCKER_USERNAME }}/ithelpdesk:${{ github.sha }}
-          cache-from: type=gha,scope=backend
-          cache-to: type=gha,mode=max,scope=backend
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      # ─── 5. Build & Push Frontend image ────────────────────────────
-      - name: Build and push Frontend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/ithelpdesk-web:latest
-            ${{ secrets.DOCKER_USERNAME }}/ithelpdesk-web:${{ github.sha }}
-          build-args: |
-            VITE_API_URL=http://${{ secrets.DEVOPS_JC_HOST }}:8090
-          cache-from: type=gha,scope=frontend
-          cache-to: type=gha,mode=max,scope=frontend
-
-      # ─── 6. Deploy via SSH ──────────────────────────────────────────
+      # ─── 5. Deploy via SSH ──────────────────────────────────────────
       - name: Deploy to DevOps Server
         uses: appleboy/ssh-action@v1
         with:
@@ -67,9 +52,10 @@ jobs:
           script: |
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PAT }}
 
-            # ── Backend ──────────────────────────────────────────────
             docker rm -f ithelpdesk 2>/dev/null || true
+            docker rm -f ithelpdesk-web 2>/dev/null || true
             docker ps -aq --filter "publish=8090" | xargs -r docker rm -f 2>/dev/null || true
+
             docker rmi ${{ secrets.DOCKER_USERNAME }}/ithelpdesk:latest 2>/dev/null || true
             docker pull ${{ secrets.DOCKER_USERNAME }}/ithelpdesk:latest
 
@@ -84,15 +70,3 @@ jobs:
               -e "DB_USERNAME=${{ secrets.DEVOPS_JC_USERNAME }}" \
               -e "DB_PASSWORD=${{ secrets.DEVOPS_JC_PASSWORD }}" \
               ${{ secrets.DOCKER_USERNAME }}/ithelpdesk:latest
-
-            # ── Frontend ─────────────────────────────────────────────
-            docker rm -f ithelpdesk-web 2>/dev/null || true
-            docker ps -aq --filter "publish=3000" | xargs -r docker rm -f 2>/dev/null || true
-            docker rmi ${{ secrets.DOCKER_USERNAME }}/ithelpdesk-web:latest 2>/dev/null || true
-            docker pull ${{ secrets.DOCKER_USERNAME }}/ithelpdesk-web:latest
-
-            docker run -d \
-              --name ithelpdesk-web \
-              --restart unless-stopped \
-              -p 3000:80 \
-              ${{ secrets.DOCKER_USERNAME }}/ithelpdesk-web:latest

@@ -43,8 +43,8 @@ export default function DashboardAdmin() {
 
     // Session dari localStorage
     const sessionRaw = localStorage.getItem('currentUser');
-    const currentUser = sessionRaw ? JSON.parse(sessionRaw) : { id: 'admin', username: 'Admin Master', role: 'ADMIN' };
-
+    const currentUser = sessionRaw ? JSON.parse(sessionRaw) : { id: 'admin', username: 'Admin Master', roleName: 'ADMINISTRATOR' };
+    
     // ================= FUNGSI =================
     const openEditModal = (user: any) => {
         setEditFormData({
@@ -73,7 +73,7 @@ export default function DashboardAdmin() {
     // Filter Data
     const filteredUsers = users.filter(user => {
         const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesRole = roleFilter === 'All Role' || user.role === roleFilter;
+        const matchesRole = roleFilter === 'All Role' || user.roleName === roleFilter;
         return matchesSearch && matchesRole;
     });
 
@@ -86,8 +86,8 @@ export default function DashboardAdmin() {
 
     // Statistik
     const totalAktif = users.filter(u => u.status === 'Aktif').length;
-    const totalHeadIT = users.filter(u => u.role === 'Head IT').length;
-    const totalStaff = users.filter(u => u.role === 'Staff IT').length;
+    const totalHeadIT = users.filter(u => u.roleName === 'Head IT').length;
+    const totalStaff = users.filter(u => u.roleName === 'Staff IT').length;
 
     return (
         <div className="flex h-screen bg-[#F0F6FF] font-sans overflow-hidden relative">
@@ -294,8 +294,8 @@ export default function DashboardAdmin() {
                                     <h3 className="mt-4 text-[17px] font-black text-slate-800 leading-tight">{user.name}</h3>
                                     <p className="text-[11px] font-bold text-slate-400 mt-0.5">@{user.username}</p>
 
-                                    <div className={`mt-2.5 px-3.5 py-1 rounded-full text-[9px] font-black tracking-widest uppercase border shadow-sm ${user.role === 'Head IT' ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
-                                        {user.role}
+                                    <div className={`mt-2.5 px-3.5 py-1 rounded-full text-[9px] font-black tracking-widest uppercase border shadow-sm ${user.roleName === 'Head IT' ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
+                                        {user.roleName}
                                     </div>
 
                                     <div className="mt-4 w-full bg-slate-50 rounded-xl border border-slate-100 px-4 py-2.5 space-y-2">
@@ -308,7 +308,7 @@ export default function DashboardAdmin() {
                                                 <p className="text-[9px] font-black text-rose-400 uppercase tracking-widest">Diberhentikan</p>
                                                 <p className="text-[11px] font-bold text-rose-600">{user.inactiveDate || user.joinDate}</p>
                                             </div>
-                                        ) : user.role === 'Staff IT' && (
+                                        ) : user.roleName === 'Staff IT' && (
                                             <div className="flex justify-between items-center border-t border-slate-200/50 pt-2">
                                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Leader</p>
                                                 <p className="text-[11px] font-bold text-slate-600 truncate max-w-[100px]">{user.leaderId ? users.find(u => String(u.id) === String(user.leaderId))?.name || 'Terhubung' : '—'}</p>

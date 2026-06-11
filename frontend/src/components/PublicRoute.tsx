@@ -10,7 +10,7 @@ interface CurrentUser {
     name: string;
     userName: string;
     email: string;
-    role: 'ADMINISTRATOR' | 'LEAD' | 'STAFF_IT_LEADER' | string;
+    roleName: 'ADMINISTRATOR' | 'LEAD' | 'STAFF_IT_LEADER' | string;
     token: string;
 }
 
@@ -41,9 +41,9 @@ export default function PublicRoute({ children }: PublicRouteProps) {
                 const session = getSession();
                 if (session && session.token) {
                     // Force dynamic redirect if they magically got back to login via bfcache
-                    if (session.role === 'ADMINISTRATOR') window.location.replace('/dashboard-admin');
-                    else if (session.role === 'LEAD') window.location.replace('/dashboard');
-                    else if (session.role === 'STAFF_IT_LEADER') window.location.replace('/dashboard-staff');
+                    if (session.roleName === 'ADMINISTRATOR') window.location.replace('/dashboard-admin');
+                    else if (session.roleName === 'LEAD') window.location.replace('/dashboard');
+                    else if (session.roleName === 'STAFF_IT_LEADER') window.location.replace('/dashboard-staff');
                     else window.location.replace('/profile');
                 }
             }
@@ -56,9 +56,9 @@ export default function PublicRoute({ children }: PublicRouteProps) {
 
     // If logged in, send them away to their respective dashboard
     if (session && session.token) {
-        if (session.role === 'ADMINISTRATOR') return <Navigate to="/dashboard-admin" replace />;
-        if (session.role === 'LEAD') return <Navigate to="/dashboard" replace />;
-        if (session.role === 'STAFF_IT_LEADER') return <Navigate to="/dashboard-staff" replace />;
+        if (session.roleName === 'ADMINISTRATOR') return <Navigate to="/dashboard-admin" replace />;
+        if (session.roleName === 'LEAD') return <Navigate to="/dashboard" replace />;
+        if (session.roleName === 'STAFF_IT_LEADER') return <Navigate to="/dashboard-staff" replace />;
         
         return <Navigate to="/profile" replace />;
     }

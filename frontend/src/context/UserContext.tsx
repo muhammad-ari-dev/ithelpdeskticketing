@@ -9,8 +9,8 @@ export interface User {
     username: string;
     email: string;
     phone: string;
-    role: 'Head IT' | 'Staff IT' | 'ADMIN';
-    role_desc: string;
+    roleName: 'Head IT' | 'Staff IT' | 'ADMIN';
+    roleDesc: string;
     staffIds: string[];
     leaderId: string | null;
     joinDate: string;
@@ -100,8 +100,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             username: userData.username,
             email: userData.email,
             phone: userData.phone,
-            role: userData.role,
-            role_desc: userData.role_desc,
+            roleName: userData.roleName,
+            roleDesc: userData.roleDesc,
             staffIds: userData.staffIds || [],
             leaderId: userData.leaderId || null,
             joinDate: formattedJoinDate,
@@ -115,7 +115,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             let updated = [...prev, newUser];
 
             // Jika Staff IT, update leader's staffIds
-            if (newUser.role === 'Staff IT' && newUser.leaderId) {
+            if (newUser.roleName === 'Staff IT' && newUser.leaderId) {
                 updated = updated.map(u =>
                     String(u.id) === String(newUser.leaderId)
                         ? { ...u, staffIds: [...u.staffIds, newId] }
@@ -124,7 +124,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             }
 
             // Jika Head IT, update tiap staff yang dipilih untuk leaderId
-            if (newUser.role === 'Head IT' && newUser.staffIds.length > 0) {
+            if (newUser.roleName === 'Head IT' && newUser.staffIds.length > 0) {
                 updated = updated.map(u =>
                     newUser.staffIds.includes(String(u.id))
                         ? { ...u, leaderId: newId }
@@ -263,8 +263,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const getUserById = (userId: string | number) => users.find(u => String(u.id) === String(userId));
-    const getHeads = () => users.filter(u => u.role === 'Head IT');
-    const getStaffs = () => users.filter(u => u.role === 'Staff IT');
+    const getHeads = () => users.filter(u => u.roleName === 'Head IT');
+    const getStaffs = () => users.filter(u => u.roleName === 'Staff IT');
 
     return (
         <UserContext.Provider value={{ users, addUser, updateUserStatus, updateUser, removeUser, getUserById, getHeads, getStaffs, updateUserPoints }}>

@@ -43,7 +43,7 @@ export default function PrivateRoute({ children, allowedRoles }: PrivateRoutePro
         return <Navigate to="/" state={{ from: location }} replace />;
     }
 
-    if (allowedRoles && !allowedRoles.includes(session.role)) {
+    if (allowedRoles && !allowedRoles.includes(session.roleName)) {
         // Logged in but wrong role → redirect to login
         return <Navigate to="/" replace />;
     }

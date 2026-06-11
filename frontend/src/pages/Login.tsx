@@ -40,19 +40,18 @@ export default function Login() {
         "currentUser",
         JSON.stringify({
           id: userData.id,
-          name: userData.nama,
+          name: userData.employeeName,
           userName: userData.username,
-          email: userData.email,
-          role: userData.role?.roleName, // "ADMINISTRATOR", "LEAD", "EMPLOYEE"
-          role_desc: userData.role_desc,
+          roleName: userData.roleName, // "ADMINISTRATOR", "LEAD", "EMPLOYEE"
+          roleDesc: userData.roleDesc,
+          createdAt: userData.createdAt,
           token: userData.token, // Menyimpan token JWT
-          created_at: userData.created_at
         }),
       );
 
       // 3. Tentukan redirect berdasarkan role dari BE
       let targetRoute = "/dashboard-staff"; // default EMPLOYEE
-      const roleName = userData.role?.roleName;
+      const roleName = userData.roleName;
       if (roleName === "ADMINISTRATOR") {
         targetRoute = "/dashboard-admin";
       } else if (roleName === "LEAD") {

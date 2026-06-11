@@ -56,7 +56,7 @@ public class SeedData implements CommandLineRunner{
             admin.setUserName("admin.123");
             admin.setEmail("admin.123@gmail.com");
             admin.setNoHp("08123456789");
-            admin.setPassword(BcryptImpl.hash(admin.getUserName() + "admin@123"));
+            admin.setPassword(BcryptImpl.hash(admin.getUserName() + "Admin123"));
             admin.setLead(null);
             admin.setAccountStatus("ACTIVE");
             admin.setRole(roleAdmin);

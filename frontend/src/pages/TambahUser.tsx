@@ -84,13 +84,20 @@ export default function TambahUser() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [newUserName, setNewUserName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Session user dari localStorage
   const sessionRaw = localStorage.getItem("currentUser");
   const sessionUser = sessionRaw
     ? JSON.parse(sessionRaw)
     : { username: "Admin", role: "ADMIN" };
+
+  const handleSignOut = () => {
+    localStorage.removeItem("currentUser");
+    navigate("/login");
+  };
 
   // ===== HANDLERS =====
   const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -117,6 +124,7 @@ export default function TambahUser() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     try {
       const dataToSend = {
         employeeName: formData.namaLengkap,
@@ -127,12 +135,26 @@ export default function TambahUser() {
         leadID: formData.role === "Staff IT" ? selectedLeaderId : null,
       };
 
-      const result = await authApi.registerEmployee(dataToSend);
-      alert("Sukses: " + result);
+      await authApi.registerEmployee(dataToSend);
+      setNewUserName(formData.namaLengkap);
       setShowSuccessPopup(true);
-      // Reset form...
+      
+      // Reset form
+      setFormData({
+        namaLengkap: "",
+        userName: "",
+        email: "",
+        noTelepon: "",
+        role: "Staff IT",
+        joinDate: new Date().toISOString().split("T")[0],
+      });
+      setSelectedLeaderId("");
+      setSelectedStaffIds([]);
     } catch (error: any) {
-      alert(error.response?.data || "Gagal daftar!");
+      setErrorMessage(error.response?.data || "Gagal mendaftarkan karyawan!");
+      setShowErrorPopup(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -140,33 +162,53 @@ export default function TambahUser() {
     <div className="flex h-screen bg-[#F0F6FF] font-sans overflow-hidden relative">
       {/* ================= SUCCESS POPUP ================= */}
       {showSuccessPopup && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white p-8 rounded-[32px] shadow-2xl flex flex-col items-center border border-slate-100 min-w-[320px]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white p-8 rounded-[32px] shadow-2xl flex flex-col items-center border border-slate-100 min-w-[320px] animate-scale-up">
             <div className="w-20 h-20 bg-[#22c55e] rounded-full flex items-center justify-center mb-4 shadow-[0_10px_25px_rgba(34,197,94,0.4)]">
-              <svg
-                className="w-10 h-10 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                strokeWidth="4"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5 13l4 4L19 7"
-                />
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
             <h3 className="text-2xl font-black text-slate-800 text-center">
               Registrasi Berhasil!
             </h3>
             <p className="text-sm font-bold text-slate-500 mt-2 text-center">
-              <span className="text-blue-600">{newUserName}</span> berhasil
-              didaftarkan.
+              <span className="text-blue-600">{newUserName}</span> berhasil didaftarkan.
             </p>
-            <p className="text-xs font-semibold text-slate-400 mt-1 text-center">
-              Email & kredensial login telah dikirim (lihat console)
+            <p className="text-xs font-semibold text-slate-400 mt-1 mb-6 text-center">
+              Email konfirmasi telah dikirimkan.
             </p>
+            <button 
+                onClick={() => setShowSuccessPopup(false)}
+                className="w-full bg-[#22c55e] hover:bg-[#16a34a] text-white font-bold py-3 rounded-xl transition-all active:scale-95"
+            >
+                OK, Lanjutkan
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ================= ERROR POPUP ================= */}
+      {showErrorPopup && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white p-8 rounded-[32px] shadow-2xl flex flex-col items-center border border-slate-100 min-w-[320px] animate-scale-up">
+            <div className="w-20 h-20 bg-rose-500 rounded-full flex items-center justify-center mb-4 shadow-[0_10px_25px_rgba(225,29,72,0.4)]">
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-black text-slate-800 text-center">
+              Registrasi Gagal
+            </h3>
+            <p className="text-sm font-bold text-rose-500 mt-2 text-center mb-6 max-w-xs">
+              {errorMessage}
+            </p>
+            <button 
+                onClick={() => setShowErrorPopup(false)}
+                className="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95"
+            >
+                Coba Lagi
+            </button>
           </div>
         </div>
       )}
@@ -179,112 +221,66 @@ export default function TambahUser() {
         ></div>
       )}
 
-      {/* ================= SIDEBAR ================= */}
-      <div
-        className={`fixed md:relative z-50 h-full ${isSidebarOpen ? "translate-x-0 w-64" : "-translate-x-full w-64 md:translate-x-0 md:w-20"} bg-gradient-to-b from-[#3B82F6] via-[#2563EB] to-[#1E40AF] shadow-2xl transition-all duration-300 ease-in-out flex flex-col shrink-0 border-r border-blue-500/30`}
-      >
-        {/* Toggle button */}
+      {/* ============ SIDEBAR BIRU ============ */}
+      <div className={`fixed md:relative z-50 h-full ${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64 md:translate-x-0 md:w-20'} bg-gradient-to-b from-blue-600 via-blue-600 to-indigo-700 shadow-2xl transition-all duration-300 ease-in-out flex flex-col shrink-0 border-r border-blue-500/30`}>
+
         <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="hidden md:block absolute -right-3.5 top-8 bg-white text-slate-800 rounded-full p-1.5 shadow-md hover:scale-110 hover:text-blue-600 transition-all z-30 border border-slate-100"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="hidden md:block absolute -right-3.5 top-8 bg-white text-slate-800 rounded-full p-1.5 shadow-md hover:scale-110 hover:text-blue-600 transition-all border border-slate-100 z-50"
         >
-          <svg
-            className={`w-3.5 h-3.5 transition-transform duration-300 ${!isSidebarOpen && "rotate-180"}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="3"
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
+            <svg className={`w-3.5 h-3.5 transition-transform duration-300 ${!isSidebarOpen && 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" />
+            </svg>
         </button>
 
-        {/* Logo */}
-        <div className="h-24 flex items-center justify-center border-b border-blue-500/30 mt-2 pb-4 px-3 overflow-hidden">
-          <div
-            className={`flex items-center justify-start transition-all duration-300 ${isSidebarOpen ? "w-full h-16" : "w-12 h-12"}`}
-          >
-            <img
-              src={LogoImg}
-              alt="Logo IT Helpdesk"
-              className={`transition-all duration-300 origin-left drop-shadow-md filter brightness-110 ${isSidebarOpen ? "w-full h-full object-contain object-left scale-[2.9] ml-2" : "h-full max-w-none object-cover object-left scale-[2.5] ml-1.5"}`}
-            />
-          </div>
-        </div>
-
-        {/* Menu Navigasi */}
-        <div className="flex-1 py-6 flex flex-col gap-2 px-3 overflow-y-auto">
-          {/* Dashboard Admin */}
-          <div
-            onClick={() => navigate("/dashboard-admin")}
-            className="flex items-center gap-3.5 text-blue-100/80 px-4 py-3 rounded-xl font-semibold cursor-pointer transition-all hover:bg-white/10 hover:text-white group"
-          >
-            <svg
-              className="w-5 h-5 shrink-0 text-blue-200/80 group-hover:text-white group-hover:scale-105 transition-transform"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-              />
-            </svg>
-            <span
-              className={`whitespace-nowrap text-[13px] uppercase tracking-wide transition-all duration-300 ${isSidebarOpen ? "opacity-100" : "opacity-0 -translate-x-4 hidden"}`}
-            >
-              Dashboard Karyawan
-            </span>
-          </div>
-
-          {/* Tambah User (AKTIF) */}
-          <div className="flex items-center gap-3.5 bg-white/20 text-white border-l-[3.5px] border-white px-4 py-3 rounded-xl font-bold cursor-pointer">
-            <svg
-              className="w-5 h-5 shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-              />
-            </svg>
-            <span
-              className={`whitespace-nowrap text-[13px] uppercase tracking-wide transition-all duration-300 ${isSidebarOpen ? "opacity-100" : "opacity-0 -translate-x-4 hidden"}`}
-            >
-              Tambah User
-            </span>
-          </div>
-        </div>
-
-        {/* Profile di sidebar */}
-        <div className="px-3 pb-6">
-          <div className="bg-white/10 rounded-2xl p-3 flex items-center gap-3 border border-white/20">
-            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shrink-0 shadow-md">
-              <span className="text-[#3B82F6] font-black text-sm">
-                {sessionUser.username?.charAt(0)?.toUpperCase()}
-              </span>
+        <div className="h-24 flex items-center justify-center border-b border-blue-500/30 mt-2 pb-4 px-3 relative overflow-hidden">
+            <div className={`flex items-center justify-start transition-all duration-300 ${isSidebarOpen ? 'w-full h-16' : 'w-12 h-12'}`}>
+                <img
+                    src={LogoImg}
+                    alt="Logo IT Helpdesk"
+                    className={`transition-all duration-300 origin-left drop-shadow-md filter brightness-110 max-w-none ${isSidebarOpen ? 'h-full object-contain scale-[2.9] ml-2' : 'h-full object-cover scale-[2.5] ml-1.5'}`}
+                />
             </div>
-            {isSidebarOpen && (
-              <div>
-                <p className="text-white font-black text-xs leading-tight">
-                  {sessionUser.username}
-                </p>
-                <p className="text-blue-200 text-[10px] font-bold mt-0.5">
-                  Admin
-                </p>
-              </div>
-            )}
-          </div>
+        </div>
+
+        <div className="flex-1 py-6 flex flex-col gap-2.5 px-3.5 overflow-y-auto">
+            <div
+                onClick={() => navigate('/dashboard-admin')}
+                className={`flex items-center cursor-pointer transition-all duration-300 group ${isSidebarOpen ? 'gap-3.5 px-4 py-3 rounded-xl' : 'justify-center w-12 h-12 rounded-xl mx-auto'} text-blue-100/80 hover:bg-white/10 hover:text-white`}
+            >
+                <svg className="w-5 h-5 shrink-0 group-hover:scale-105 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                {isSidebarOpen && <span className="whitespace-nowrap text-[13px] tracking-wide uppercase font-bold">Dashboard</span>}
+            </div>
+
+            <div
+                onClick={() => navigate('/profile')}
+                className={`flex items-center cursor-pointer transition-all duration-300 group ${isSidebarOpen ? 'gap-3.5 px-4 py-3 rounded-xl' : 'justify-center w-12 h-12 rounded-xl mx-auto'} text-blue-100/80 hover:bg-white/10 hover:text-white`}
+            >
+                <svg className="w-5 h-5 shrink-0 group-hover:scale-105 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                {isSidebarOpen && <span className="whitespace-nowrap text-[13px] tracking-wide uppercase font-bold">Profile</span>}
+            </div>
+
+            <div
+                className={`flex items-center cursor-pointer transition-all duration-300 group ${isSidebarOpen ? 'gap-3.5 px-4 py-3 rounded-xl' : 'justify-center w-12 h-12 rounded-xl mx-auto'} bg-white/20 text-white border-l-[3.5px] border-white`}
+            >
+                <svg className="w-5 h-5 shrink-0 group-hover:scale-105 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                {isSidebarOpen && <span className="whitespace-nowrap text-[13px] tracking-wide uppercase font-bold">Tambah User</span>}
+            </div>
+            
+            {/* Sign Out Button in Sidebar */}
+            <div
+                onClick={handleSignOut}
+                className="mt-auto flex items-center gap-3.5 text-blue-100/80 px-4 py-3 rounded-xl font-semibold cursor-pointer transition-all hover:bg-red-500/20 hover:text-red-100 group"
+            >
+                <svg className="w-5 h-5 shrink-0 group-hover:scale-105 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                <span className={`whitespace-nowrap text-[13px] tracking-wide transition-all duration-300 ${isSidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 hidden'}`}>SIGN OUT</span>
+            </div>
         </div>
       </div>
 
@@ -394,26 +390,8 @@ export default function TambahUser() {
               </div>
 
               {/* Info Admin Note */}
-              <div className="bg-blue-50 border border-blue-200 rounded-2xl px-5 py-3 flex items-center gap-3 mb-6">
-                <svg
-                  className="w-5 h-5 text-[#3B82F6] shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <p className="text-[#1E40AF] font-bold text-[13px]">
-                  Password default:{" "}
-                  <span className="font-black bg-blue-100 px-2 py-0.5 rounded-lg">
-                    password123
-                  </span>
-                </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-2xl px-5 py-1 flex items-center gap-3 mb-6">
+              
               </div>
 
               {/* Form Card */}
@@ -498,21 +476,7 @@ export default function TambahUser() {
                     />
                   </div>
 
-                  {/* Tanggal Bergabung */}
-                  <div>
-                    <label className="block text-[11px] font-black text-[#1E40AF] mb-1.5 ml-1">
-                      Tanggal Bergabung *
-                    </label>
-                    <input
-                      type="date"
-                      value={formData.joinDate}
-                      onChange={(e) =>
-                        setFormData({ ...formData, joinDate: e.target.value })
-                      }
-                      required
-                      className="w-full bg-[#F8FAFF] border border-slate-200 rounded-2xl px-5 py-3 text-slate-700 font-bold text-[14px] outline-none focus:border-[#3B82F6] focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all"
-                    />
-                  </div>
+                  
 
                   {/* Role */}
                   <div>
@@ -659,22 +623,35 @@ export default function TambahUser() {
                 <div className="col-span-1 md:col-span-2 flex gap-4 mt-4">
                   <button
                     type="submit"
-                    className="flex-1 bg-[#22c55e] hover:bg-[#16a34a] text-white font-black text-[15px] py-4 rounded-2xl shadow-[0_8px_25px_rgba(34,197,94,0.35)] transition-all active:scale-95 flex items-center justify-center gap-2.5"
+                    disabled={isSubmitting}
+                    className={`flex-1 text-white font-black text-[15px] py-4 rounded-2xl shadow-[0_8px_25px_rgba(34,197,94,0.35)] transition-all flex items-center justify-center gap-2.5 ${isSubmitting ? 'bg-emerald-400 cursor-not-allowed' : 'bg-[#22c55e] hover:bg-[#16a34a] active:scale-95'}`}
                   >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2.5"
-                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                      />
-                    </svg>
-                    Registrasi Karyawan
+                    {isSubmitting ? (
+                        <>
+                            <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Memproses...
+                        </>
+                    ) : (
+                        <>
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2.5"
+                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                              />
+                            </svg>
+                            Registrasi Karyawan
+                        </>
+                    )}
                   </button>
                   <button
                     type="button"

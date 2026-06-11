@@ -8,7 +8,6 @@ export default function Profile() {
 
     // Mengambil session yang sedang aktif
     const currentUserSession = JSON.parse(localStorage.getItem('currentUser') || '{}');
-    
     // Sinkronisasi data real-time dengan UserContext
     let user = users.find(u => String(u.id) === String(currentUserSession?.id));
 
@@ -17,11 +16,11 @@ export default function Profile() {
         user = {
             id: currentUserSession.id,
             name: currentUserSession.name || 'System Administrator',
-            username: currentUserSession.userName || 'admin',
-            role: currentUserSession.role || 'ADMIN',
-            role_desc: currentUserSession.role_desc,
+            username: currentUserSession.username || 'admin',
+            roleName: currentUserSession.roleName || 'ADMIN',
+            roleDesc: currentUserSession.roleDesc,
             avatar: 'https://i.pravatar.cc/150?img=68',
-            joinDate: currentUserSession.created_at,
+            joinDate: currentUserSession.createdAt,
             status: 'Aktif',
             email: currentUserSession.email,
             phone: '-',
@@ -94,7 +93,7 @@ export default function Profile() {
                             <p className="text-blue-500 font-bold text-sm mt-1 mb-4">@{user.username}</p>
                             
                             <span className="px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-xs font-black tracking-widest uppercase border border-indigo-100 mb-6">
-                                {user.role}
+                                {user.roleName}
                             </span>
                             
                             <div className="w-full h-px bg-slate-100 mb-6"></div>
@@ -116,9 +115,9 @@ export default function Profile() {
                                 Informasi Pekerjaan
                             </h3>
                             <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2 ms-7">
-                                {user.role_desc}
+                                {user.roleDesc}
                             </h3>
-                            {user.role === 'Staff IT' && (
+                            {user.roleName === 'Staff IT' && (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col items-center justify-center text-center">
                                         <p className="text-[11px] font-black tracking-widest text-slate-400 uppercase mb-2">Total Poin Performa</p>
@@ -133,7 +132,7 @@ export default function Profile() {
                                 </div>
                             )}
 
-                            {user.role === 'Head IT' && (
+                            {user.roleName === 'Head IT' && (
                                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-100 flex items-center justify-between">
                                     <div>
                                         <p className="text-[11px] font-black tracking-widest text-blue-400 uppercase mb-1">Total Staff Dikelola</p>
@@ -145,7 +144,7 @@ export default function Profile() {
                                 </div>
                             )}
 
-                            {user.role === 'ADMIN' && (
+                            {user.roleName === 'ADMIN' && (
                                 <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-2xl border border-slate-700 flex items-center gap-4 text-white shadow-lg">
                                     <div className="w-12 h-12 bg-slate-700/50 rounded-full flex items-center justify-center shrink-0 border border-slate-600">
                                         <span className="text-xl">🛡️</span>

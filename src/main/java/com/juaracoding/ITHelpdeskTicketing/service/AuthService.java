@@ -29,6 +29,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -147,7 +149,9 @@ public class AuthService implements UserDetailsService {
          *
          * LoginResponseDTO berisi: id, employeeName, userName, email, roleName, token
          */
-        LoginResponseDTO responseDTO = new LoginResponseDTO(employeeDb, token);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", java.util.Locale.ENGLISH);
+        String createdAt = employeeDb.getCreatedAt().format(formatter);
+        LoginResponseDTO responseDTO = new LoginResponseDTO(employeeDb, createdAt, token);
 
         return new ResponseHandler()
                 .handleResponse(ConstantMessage.SUCCESS_LOGIN, HttpStatus.OK, responseDTO, request);

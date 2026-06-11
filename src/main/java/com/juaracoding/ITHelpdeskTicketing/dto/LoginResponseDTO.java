@@ -21,7 +21,7 @@ import java.util.UUID;
 public class LoginResponseDTO {
 
     /** ID unik employee — dibutuhkan frontend untuk referensi data */
-    private UUID id;
+    private String id;
 
     /**
      * Nama lengkap employee.
@@ -33,9 +33,10 @@ public class LoginResponseDTO {
      * dibanding username seperti "hakim.123_"
      */
     private String employeeName;
+    private String username;
 
     /** Email — untuk ditampilkan di halaman profile */
-    private String email;
+    // private String email;
 
     /**
      * Nama role — hanya String nama rolenya saja.
@@ -48,7 +49,8 @@ public class LoginResponseDTO {
      * yang tidak dibutuhkan frontend sama sekali.
      */
     private String roleName;
-
+    private String roleDesc;
+    private String createdAt;
     /**
      * JWT Token — wajib ada di response login.
      *
@@ -71,11 +73,13 @@ public class LoginResponseDTO {
      * @param employee : data employee dari DB (employeeDb)
      * @param token    : JWT token yang baru dibuat
      */
-    public LoginResponseDTO(Employee employee, String token) {
-        this.id           = employee.getId();
+    public LoginResponseDTO(Employee employee,String createdAt, String token) {
+        this.id           = employee.getId().toString();
         this.employeeName = employee.getEmployeeName();
-        this.email        = employee.getEmail();
+        this.username     = employee.getUserName();
         this.roleName     = employee.getRole().getRoleName();
+        this.roleDesc     = employee.getRole().getRoleDesc();
+        this.createdAt    = createdAt;
         this.token        = token;
     }
 }

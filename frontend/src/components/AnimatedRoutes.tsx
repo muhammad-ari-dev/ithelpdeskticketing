@@ -38,7 +38,7 @@ export default function AnimatedRoutes() {
                 <Route path="/set-password" element={<SetPassword />} />
 
                 {/* Protected: LEAD only */}
-                <Route path="/dashboard" element={
+                <Route path="/dashboard-head" element={
                     <PrivateRoute allowedRoles={['LEAD']}>
                         <PageTransition><DashboardHead /></PageTransition>
                     </PrivateRoute>
@@ -51,9 +51,9 @@ export default function AnimatedRoutes() {
                     </PrivateRoute>
                 } />
 
-                {/* Protected: STAFF_IT_LEADER only */}
+                {/* Protected: EMPLOYEE only */}
                 <Route path="/dashboard-staff" element={
-                    <PrivateRoute allowedRoles={['STAFF_IT_LEADER']}>
+                    <PrivateRoute allowedRoles={['EMPLOYEE']}>
                         <PageTransition><DashboardStaff /></PageTransition>
                     </PrivateRoute>
                 } />

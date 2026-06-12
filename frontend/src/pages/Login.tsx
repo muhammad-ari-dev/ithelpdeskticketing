@@ -19,11 +19,15 @@ export default function Login() {
   // === STATE UNTUK ERROR POP UP ===
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [usernameError, setUsernameError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   // ================= HANDLE LOGIN =================
   // ================= HANDLE LOGIN (VERSI API BACKEND) =================
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setUsernameError("");
+    setPasswordError("");
 
     try {
       // 1. Tembak API Backend lewat Kurir
@@ -42,20 +46,21 @@ export default function Login() {
           id: userData.id,
           name: userData.employeeName,
           userName: userData.username,
+          // email: userData.email, // backend tidak menyediakan email
           roleName: userData.roleName, // "ADMINISTRATOR", "LEAD", "EMPLOYEE"
           roleDesc: userData.roleDesc,
-          createdAt: userData.createdAt,
           token: userData.token, // Menyimpan token JWT
+          createdAt: userData.createdAt
         }),
       );
 
       // 3. Tentukan redirect berdasarkan role dari BE
       let targetRoute = "/dashboard-staff"; // default EMPLOYEE
       const roleName = userData.roleName;
-      if (roleName === "ADMINISTRATOR") {
+      if (roleName === "ADMINISTRATOR" || roleName === "ADMIN") {
         targetRoute = "/dashboard-admin";
       } else if (roleName === "LEAD") {
-        targetRoute = "/dashboard";
+        targetRoute = "/dashboard-head";
       }
 
       // 4. Tampilkan popup sukses lalu navigasi
@@ -65,16 +70,52 @@ export default function Login() {
         navigate(targetRoute);
       }, 2800);
     } catch (error: unknown) {
-      const err = error as { response?: { data?: string } };
-      const errorMsg =
-        err.response?.data || "Gagal terhubung ke server Backend!";
-      setErrorMessage(errorMsg);
-      setShowErrorPopup(true);
-      setTimeout(() => setShowErrorPopup(false), 3000);
+      const err = error as { response?: { data?: any } };
+      let errorMsg = "";
+      
+      if (err.response?.data) {
+        if (typeof err.response.data === "string") {
+          errorMsg = err.response.data;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      }
+
+      if (!errorMsg || errorMsg.trim() === "") {
+        // Jika backend tidak mengirim alasan spesifik (misal server down/CORS)
+        setPasswordError("password tidak sesuai dengan username");
+        return;
+      }
+
+      const lowerMsg = String(errorMsg).toLowerCase();
+      
+      // 1. Cek apabila error berhubungan dengan kata sandi/kredensial
+      if (
+        lowerMsg.includes("password") || 
+        lowerMsg.includes("sandi") || 
+        lowerMsg.includes("kredensial") || 
+        lowerMsg.includes("credential") ||
+        lowerMsg.includes("bad") ||
+        lowerMsg.includes("salah")
+      ) {
+        setPasswordError("password tidak sesuai dengan username");
+      } 
+      // 2. Cek apabila error berhubungan dengan ketiadaan user
+      else if (
+        lowerMsg.includes("username") || 
+        lowerMsg.includes("user") || 
+        lowerMsg.includes("pengguna") ||
+        lowerMsg.includes("ditemukan") ||
+        lowerMsg.includes("found")
+      ) {
+        setUsernameError("username tidak sesuai dengan password");
+      } 
+      // 3. Fallback jika response dari backend tidak terdeteksi kata kuncinya
+      else {
+        setPasswordError("password tidak sesuai dengan username");
+      }
     }
   }; // <== TAMBAHIN INI CUY! WAJIB BANGET BIAR FUNGSINYA SELESAI
-
-  // ================= ICON EYE (TOMBOL LIHAT PASSWORD) =================
 
   // ================= ICON EYE (TOMBOL LIHAT PASSWORD) =================
   const EyeIcon = ({
@@ -205,8 +246,6 @@ export default function Login() {
           </h1>
 
           <div className="w-full max-w-[435px] bg-white/75 backdrop-blur-2xl rounded-[32px] border border-white/80 shadow-[0_20px_50px_rgba(30,58,138,0.05)] px-8 py-8 md:px-10 md:py-10 relative">
-            {/* ================= SUCCESS POP UP (REMOVED DARI KARTU) ================= */}
-
             {/* ================= ERROR POP UP ================= */}
             {showErrorPopup && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/95 backdrop-blur-md rounded-[32px] animate-scale-up">
@@ -268,12 +307,24 @@ export default function Login() {
                   <input
                     type="text"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e) => {
+                      setUsername(e.target.value);
+                      setUsernameError("");
+                    }}
                     required
                     placeholder="Masukkan nama pengguna"
-                    className="w-full h-[52px] px-5 rounded-full border border-slate-200/80 bg-white/80 text-[14px] text-slate-700 font-medium focus:outline-none focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100/50 transition-all duration-300 shadow-sm"
+                    className={`w-full h-[52px] px-5 rounded-full border bg-white/80 text-[14px] font-medium focus:outline-none focus:bg-white focus:ring-4 transition-all duration-300 shadow-sm ${
+                      usernameError 
+                        ? "border-red-400 text-red-600 focus:border-red-500 focus:ring-red-100/50" 
+                        : "border-slate-200/80 text-slate-700 focus:border-blue-400 focus:ring-blue-100/50"
+                    }`}
                   />
                 </div>
+                {usernameError && (
+                  <p className="text-rose-500 text-[11px] font-semibold mt-1.5 ml-3 animate-fade-in">
+                    * {usernameError}
+                  </p>
+                )}
               </div>
 
               {/* PASSWORD */}
@@ -288,16 +339,28 @@ export default function Login() {
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setPasswordError("");
+                    }}
                     required
                     placeholder="••••••••"
-                    className="w-full h-[52px] px-5 rounded-full border border-slate-200/80 bg-white/80 text-[14px] text-slate-700 font-medium focus:outline-none focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100/50 transition-all duration-300 shadow-sm pr-14"
+                    className={`w-full h-[52px] px-5 rounded-full border bg-white/80 text-[14px] font-medium focus:outline-none focus:bg-white focus:ring-4 transition-all duration-300 shadow-sm pr-14 ${
+                      passwordError
+                        ? "border-red-400 text-red-600 focus:border-red-500 focus:ring-red-100/50"
+                        : "border-slate-200/80 text-slate-700 focus:border-blue-400 focus:ring-blue-100/50"
+                    }`}
                   />
                   <EyeIcon
                     isVisible={showPassword}
                     onClick={() => setShowPassword(!showPassword)}
                   />
                 </div>
+                {passwordError && (
+                  <p className="text-rose-500 text-[11px] font-semibold mt-1.5 ml-3 animate-fade-in">
+                    * {passwordError}
+                  </p>
+                )}
               </div>
 
               {/* REMEMBER ME CHECKBOX */}
@@ -372,7 +435,7 @@ export default function Login() {
                   />
                 </svg>
                 <p className="text-[11px] font-semibold text-blue-500 leading-relaxed">
-                  Pendaftaran akun dilakukan oleh <strong>Abang Hakimmmm</strong>.
+                  Pendaftaran akun dilakukan oleh <strong>Admin</strong>.
                   Hubungi Admin IT Anda jika belum memiliki akun.
                 </p>
               </div>

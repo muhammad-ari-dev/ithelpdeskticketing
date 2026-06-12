@@ -6,39 +6,20 @@ import { useUserContext } from '../context/UserContext';
 import { authApi } from '../api/authApi';// Import authApi
 
 // ============================================================
-// KOMPONEN GELOMBANG BIRU (Konsisten seperti Login/Register)
+// KOMPONEN GELOMBANG BIRU
 // ============================================================
 const BlueWave = () => (
-  <div className="absolute bottom-0 left-0 w-full z-0 pointer-events-none overflow-hidden">
-    <svg
-      viewBox="0 0 1440 220"
-      className="w-full h-[180px]"
-      preserveAspectRatio="none"
-    >
-      <defs>
-        <filter id="waveDropShadow">
-          <feDropShadow
-            dx="0"
-            dy="-8"
-            stdDeviation="15"
-            floodColor="#1D4ED8"
-            floodOpacity="0.18"
-          />
-        </filter>
-      </defs>
-      <path
-        fill="#3B82F6"
-        filter="url(#waveDropShadow)"
-        d="M0,160 C200,220 380,80 600,140 C820,200 1020,60 1200,120 C1320,160 1390,180 1440,170 L1440,220 L0,220 Z"
-        opacity="0.35"
-      />
-      <path
-        fill="#2563EB"
-        d="M0,190 C180,140 360,220 540,180 C720,140 900,200 1080,160 C1200,130 1360,200 1440,190 L1440,220 L0,220 Z"
-        opacity="0.5"
-      />
-    </svg>
-  </div>
+    <div className="absolute bottom-0 left-0 w-full z-0 pointer-events-none overflow-hidden">
+        <svg viewBox="0 0 1440 170" className="w-full h-[130px]" preserveAspectRatio="none">
+            <defs>
+                <filter id="waveHeadShadow">
+                    <feDropShadow dx="0" dy="-6" stdDeviation="12" floodColor="#3B82F6" floodOpacity="0.15" />
+                </filter>
+            </defs>
+            <path fill="#3B82F6" filter="url(#waveHeadShadow)" d="M0,120 C240,170 480,60 720,110 C960,160 1180,50 1440,100 L1440,170 L0,170 Z" opacity="0.28" />
+            <path fill="#2563EB" d="M0,145 C180,110 360,165 540,135 C720,105 900,158 1080,125 C1200,105 1360,155 1440,142 L1440,170 L0,170 Z" opacity="0.42" />
+        </svg>
+    </div>
 );
 
 // ============================================================
@@ -124,6 +105,39 @@ export default function TambahUser() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validasi Nama Lengkap
+    const nameRegex = /^[a-zA-Z\s.'-]{2,64}$/;
+    if (!nameRegex.test(formData.namaLengkap)) {
+      setErrorMessage("Nama lengkap tidak valid. Gunakan 2-64 karakter huruf, spasi, titik, apostrof, atau strip.");
+      setShowErrorPopup(true);
+      return;
+    }
+
+    // Validasi Username
+    const usernameRegex = /^[a-zA-Z0-9._]{3,64}$/;
+    if (!usernameRegex.test(formData.userName)) {
+      setErrorMessage("Username tidak valid. Gunakan 3-64 karakter alfanumerik, titik, atau underscore tanpa spasi.");
+      setShowErrorPopup(true);
+      return;
+    }
+
+    // Validasi Nomor HP
+    const phoneRegex = /^(\+62|62|0)[0-9]{8,13}$/;
+    if (!phoneRegex.test(formData.noTelepon)) {
+      setErrorMessage("Nomor HP tidak valid. Harus diawali +62, 62, atau 0 dan diikuti 8-13 angka.");
+      setShowErrorPopup(true);
+      return;
+    }
+
+    // Validasi Email
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(formData.email)) {
+      setErrorMessage("Alamat email tidak valid. Pastikan format domain komplit (misal: .com, bukan .c).");
+      setShowErrorPopup(true);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const dataToSend = {
@@ -160,6 +174,11 @@ export default function TambahUser() {
 
   return (
     <div className="flex h-screen bg-[#F0F6FF] font-sans overflow-hidden relative">
+
+      {/* Ambient blobs */}
+      <div className="absolute top-[-15%] right-[-10%] w-[55vw] h-[55vw] rounded-full bg-blue-200/20 blur-[130px] pointer-events-none z-0" />
+      <div className="absolute bottom-[-10%] left-[-15%] w-[45vw] h-[45vw] rounded-full bg-indigo-200/15 blur-[100px] pointer-events-none z-0" />
+
       {/* ================= SUCCESS POPUP ================= */}
       {showSuccessPopup && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-fade-in">
@@ -413,16 +432,21 @@ export default function TambahUser() {
                     <input
                       type="text"
                       value={formData.namaLengkap}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          namaLengkap: e.target.value,
-                        })
-                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^[a-zA-Z\s.'-]*$/.test(val)) {
+                          setFormData({ ...formData, namaLengkap: val });
+                        }
+                      }}
                       placeholder="cth: Ariana Azzahra"
                       required
+                      pattern="^[a-zA-Z\s.'\-]{2,64}$"
+                      title="Gunakan 2-64 karakter huruf, spasi, titik, strip (-), atau apostrof (')"
                       className="w-full bg-[#F8FAFF] border border-slate-200 rounded-2xl px-5 py-3 text-slate-700 font-bold text-[14px] outline-none focus:border-[#3B82F6] focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all"
                     />
+                    <p className="text-[10px] text-slate-400 mt-1.5 ml-2 font-semibold">
+                      * 2-64 karakter huruf, spasi, titik, strip (-), atau apostrof (')
+                    </p>
                   </div>
 
                   {/* User Name */}
@@ -433,13 +457,21 @@ export default function TambahUser() {
                     <input
                       type="text"
                       value={formData.userName}
-                      onChange={(e) =>
-                        setFormData({ ...formData, userName: e.target.value })
-                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^[a-zA-Z0-9._]*$/.test(val)) {
+                          setFormData({ ...formData, userName: val });
+                        }
+                      }}
                       placeholder="cth: Ariana.17200"
                       required
+                      pattern="^[a-zA-Z0-9._]{3,64}$"
+                      title="Gunakan 3-64 karakter huruf/angka, titik (.), atau underscore (_). Tanpa spasi."
                       className="w-full bg-[#F8FAFF] border border-slate-200 rounded-2xl px-5 py-3 text-slate-700 font-bold text-[14px] outline-none focus:border-[#3B82F6] focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all"
                     />
+                    <p className="text-[10px] text-slate-400 mt-1.5 ml-2 font-semibold">
+                      * 3-64 karakter huruf/angka, titik (.), atau underscore (_). Tanpa spasi.
+                    </p>
                   </div>
 
                   {/* Email */}
@@ -455,8 +487,13 @@ export default function TambahUser() {
                       }
                       placeholder="cth: ariana@gmail.com"
                       required
+                      pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
+                      title="Pastikan format domain komplit (cth: @gmail.com)."
                       className="w-full bg-[#F8FAFF] border border-slate-200 rounded-2xl px-5 py-3 text-slate-700 font-bold text-[14px] outline-none focus:border-[#3B82F6] focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all"
                     />
+                    <p className="text-[10px] text-slate-400 mt-1.5 ml-2 font-semibold">
+                      * Pastikan format domain komplit (cth: @gmail.com).
+                    </p>
                   </div>
 
                   {/* No Telepon */}
@@ -467,13 +504,21 @@ export default function TambahUser() {
                     <input
                       type="tel"
                       value={formData.noTelepon}
-                      onChange={(e) =>
-                        setFormData({ ...formData, noTelepon: e.target.value })
-                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^[0-9+]*$/.test(val)) {
+                          setFormData({ ...formData, noTelepon: val });
+                        }
+                      }}
                       placeholder="cth: 081234567890"
                       required
+                      pattern="^(\+62|62|0)[0-9]{8,13}$"
+                      title="Nomor HP harus diawali +62, 62, atau 0 dan diikuti 8-13 angka."
                       className="w-full bg-[#F8FAFF] border border-slate-200 rounded-2xl px-5 py-3 text-slate-700 font-bold text-[14px] outline-none focus:border-[#3B82F6] focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all"
                     />
+                    <p className="text-[10px] text-slate-400 mt-1.5 ml-2 font-semibold">
+                      * Awalan +62, 62, atau 0, diikuti 8-13 angka.
+                    </p>
                   </div>
 
                   

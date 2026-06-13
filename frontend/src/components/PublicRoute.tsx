@@ -42,9 +42,14 @@ export default function PublicRoute({ children }: PublicRouteProps) {
                 if (session && session.token) {
                     // Force dynamic redirect if they magically got back to login via bfcache
                     if (session.roleName === 'ADMINISTRATOR') window.location.replace('/dashboard-admin');
-                    else if (session.roleName === 'LEAD') window.location.replace('/dashboard');
-                    else if (session.roleName === 'STAFF_IT_LEADER') window.location.replace('/dashboard-staff');
-                    else window.location.replace('/profile');
+                    else if (session.roleName === 'LEAD') window.location.replace('/dashboard-head');
+                    else if (session.roleName === 'EMPLOYEE') window.location.replace('/dashboard-admin');
+                    else {
+                        // Sesi rusak (tidak ada roleName), hapus otomatis dan kembali ke login
+                        localStorage.removeItem('currentUser');
+                        localStorage.removeItem('token');
+                        window.location.replace('/');
+                    }
                 }
             }
         };
@@ -57,10 +62,13 @@ export default function PublicRoute({ children }: PublicRouteProps) {
     // If logged in, send them away to their respective dashboard
     if (session && session.token) {
         if (session.roleName === 'ADMINISTRATOR') return <Navigate to="/dashboard-admin" replace />;
-        if (session.roleName === 'LEAD') return <Navigate to="/dashboard" replace />;
-        if (session.roleName === 'STAFF_IT_LEADER') return <Navigate to="/dashboard-staff" replace />;
+        if (session.roleName === 'LEAD') return <Navigate to="/dashboard-head" replace />;
+        if (session.roleName === 'EMPLOYEE') return <Navigate to="/dashboard-staff" replace />;
+        // Jika sampai di sini, berarti sesi rusak/role tidak valid
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('token');
         
-        return <Navigate to="/profile" replace />;
+        // Sesi sudah dibersihkan, biarkan lanjut ke bawah untuk menampilkan halaman Login
     }
 
     // Not logged in → let them see the public page (e.g., Login Form)

@@ -38,6 +38,7 @@ public class ConstantMessage {
     public static final String USER_NOT_FOUND       = "User Tidak Ditemukan";
     public static final String ERROR_AUTH           = "Otentikasi Bermasalah";
     public static final String ACCOUNT_NOT_ACTIVE   = "Akun Belum Aktif";
+    public static final String TOKEN_ERROR          = "Token salah atau expired";
 
     // =============================================
     // PESAN FITUR BARU — EMPLOYEE MANAGEMENT

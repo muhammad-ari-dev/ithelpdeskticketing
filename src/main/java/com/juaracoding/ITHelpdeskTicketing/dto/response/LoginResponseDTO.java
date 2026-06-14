@@ -1,8 +1,7 @@
-package com.juaracoding.ITHelpdeskTicketing.dto;
+package com.juaracoding.ITHelpdeskTicketing.dto.response;
 
 import com.juaracoding.ITHelpdeskTicketing.model.Employee;
 import lombok.Data;
-import java.util.UUID;
 
 /**
  * DTO untuk response setelah login berhasil.
@@ -21,7 +20,7 @@ import java.util.UUID;
 public class LoginResponseDTO {
 
     /** ID unik employee — dibutuhkan frontend untuk referensi data */
-    private String id;
+//    private String id;
 
     /**
      * Nama lengkap employee.
@@ -32,8 +31,8 @@ public class LoginResponseDTO {
      * Nama asli lebih user-friendly untuk ditampilkan di UI
      * dibanding username seperti "hakim.123_"
      */
-    private String employeeName;
-    private String username;
+//    private String employeeName;
+//    private String username;
 
     /** Email — untuk ditampilkan di halaman profile */
     // private String email;
@@ -48,9 +47,9 @@ public class LoginResponseDTO {
      * Full object Role berisi createdBy, createdAt, dll
      * yang tidak dibutuhkan frontend sama sekali.
      */
-    private String roleName;
-    private String roleDesc;
-    private String createdAt;
+//    private String roleName;
+//    private String roleDesc;
+//    private String createdAt;
     /**
      * JWT Token — wajib ada di response login.
      *
@@ -73,13 +72,13 @@ public class LoginResponseDTO {
      * @param employee : data employee dari DB (employeeDb)
      * @param token    : JWT token yang baru dibuat
      */
-    public LoginResponseDTO(Employee employee,String createdAt, String token) {
-        this.id           = employee.getId().toString();
-        this.employeeName = employee.getEmployeeName();
-        this.username     = employee.getUserName();
-        this.roleName     = employee.getRole().getRoleName();
-        this.roleDesc     = employee.getRole().getRoleDesc();
-        this.createdAt    = createdAt;
+    public LoginResponseDTO(String token) {
+//        this.id           = employee.getId().toString();
+//        this.employeeName = employee.getEmployeeName();
+//        this.username     = employee.getUserName();
+//        this.roleName     = employee.getRole().getRoleName();
+//        this.roleDesc     = employee.getRole().getRoleDesc();
+//        this.createdAt    = createdAt;
         this.token        = token;
     }
 }

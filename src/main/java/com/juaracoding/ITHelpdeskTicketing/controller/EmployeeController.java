@@ -1,14 +1,17 @@
 package com.juaracoding.ITHelpdeskTicketing.controller;
 
-import com.juaracoding.ITHelpdeskTicketing.dto.ChangePasswordDTO;
-import com.juaracoding.ITHelpdeskTicketing.dto.DisableUserDTO;
-import com.juaracoding.ITHelpdeskTicketing.dto.RegisDTO;
-import com.juaracoding.ITHelpdeskTicketing.dto.SetPasswordDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.validation.ChangePasswordDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.response.DisableUserDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.validation.RegisDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.validation.SetPasswordDTO;
 import com.juaracoding.ITHelpdeskTicketing.service.EmployeeService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,6 +23,11 @@ public class EmployeeController {
     @Autowired
     private EmployeeService employeeService;
 
+    @GetMapping("/profile")
+    public ResponseEntity<Object> profile(@AuthenticationPrincipal UserDetails userDetails, HttpServletRequest request){
+        return employeeService.getProfile(userDetails.getUsername(), request);
+    }
+
     // =========================================================
     // ENDPOINT YANG SUDAH ADA (tidak diubah)
     // =========================================================
@@ -28,16 +36,6 @@ public class EmployeeController {
     public ResponseEntity<?> registerEmployee(@Valid @RequestBody RegisDTO regisDTO) {
         try {
             String result = employeeService.registerEmployee(regisDTO);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
-    @PostMapping("/set-password")
-    public ResponseEntity<?> setPassword(@Valid @RequestBody SetPasswordDTO dto) {
-        try {
-            String result = employeeService.setPassword(dto);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

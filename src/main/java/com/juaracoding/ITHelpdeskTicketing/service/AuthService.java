@@ -1,8 +1,9 @@
 package com.juaracoding.ITHelpdeskTicketing.service;
 
 import com.juaracoding.ITHelpdeskTicketing.config.JwtConfig;
-import com.juaracoding.ITHelpdeskTicketing.dto.LoginDTO;
-import com.juaracoding.ITHelpdeskTicketing.dto.LoginResponseDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.validation.LoginDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.response.LoginResponseDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.validation.SetPasswordDTO;
 import com.juaracoding.ITHelpdeskTicketing.handler.ResponseHandler;
 import com.juaracoding.ITHelpdeskTicketing.model.Employee;
 import com.juaracoding.ITHelpdeskTicketing.repository.EmployeeRepo;
@@ -11,6 +12,7 @@ import com.juaracoding.ITHelpdeskTicketing.security.CryptoJwt;
 import com.juaracoding.ITHelpdeskTicketing.security.JwtUtility;
 import com.juaracoding.ITHelpdeskTicketing.util.ConstantMessage;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +25,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -31,7 +32,7 @@ import java.util.*;
 public class AuthService implements UserDetailsService {
 
     @Autowired
-    private final EmployeeRepo employeeRepo;
+    private EmployeeRepo employeeRepo;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -114,13 +115,13 @@ public class AuthService implements UserDetailsService {
          * Token ditandatangani dengan secret key → tidak bisa dipalsukan.
          */
         Map<String, Object> claims = new HashMap<>();
-        claims.put("id",       employeeDb.getId());
-        claims.put("nama",     employeeDb.getEmployeeName());
-        claims.put("username", employeeDb.getUserName());
-        claims.put("email",    employeeDb.getEmail());
-        claims.put("no_hp",    employeeDb.getNoHp());
-        claims.put("role",     employeeDb.getRole().getRoleName()); // hanya nama role, bukan object
-        claims.put("lead_id",  employeeDb.getLead() != null ? employeeDb.getLead().getId() : null);
+//        claims.put("id",       employeeDb.getId());
+//        claims.put("nama",     employeeDb.getEmployeeName());
+//        claims.put("username", employeeDb.getUserName());
+//        claims.put("email",    employeeDb.getEmail());
+//        claims.put("no_hp",    employeeDb.getNoHp());
+        claims.put("roleName",     employeeDb.getRole().getRoleName()); // hanya nama role, bukan object
+//        claims.put("lead_id",  employeeDb.getLead() != null ? employeeDb.getLead().getId() : null);
         // ↑ PERBAIKAN: sebelumnya kirim full object Lead ke dalam token → boros & berisiko
         //   Sekarang hanya kirim UUID lead saja (atau null jika tidak punya lead)
 
@@ -140,12 +141,32 @@ public class AuthService implements UserDetailsService {
          *
          * LoginResponseDTO berisi: id, employeeName, userName, email, roleName, token
          */
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", java.util.Locale.ENGLISH);
-        String createdAt = employeeDb.getCreatedAt().format(formatter);
-        LoginResponseDTO responseDTO = new LoginResponseDTO(employeeDb, createdAt, token);
+//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", java.util.Locale.ENGLISH);
+//        String createdAt = employeeDb.getCreatedAt().format(formatter);
+        LoginResponseDTO responseDTO = new LoginResponseDTO(token);
 
         return new ResponseHandler()
                 .handleResponse(ConstantMessage.SUCCESS_LOGIN, HttpStatus.OK, responseDTO, request);
+    }
+
+    // =========================================================
+    // FITUR 2: SET PASSWORD (oleh Employee via Magic Link)
+    // =========================================================
+    @Transactional
+    public String setPassword(SetPasswordDTO dto) {
+        if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
+            throw new RuntimeException("Password baru dan konfirmasi tidak cocok!");
+        }
+
+        Employee employee = employeeRepo.findByMagicToken(dto.getMagicToken())
+                .orElseThrow(() -> new RuntimeException("Token tidak valid atau sudah kedaluwarsa!"));
+
+        employee.setPassword(BcryptImpl.hash(employee.getUserName() + dto.getNewPassword()));
+        employee.setAccountStatus("ACTIVE");
+        employee.setMagicToken(null);
+        employeeRepo.save(employee);
+
+        return "Password berhasil diset! Akun sekarang sudah aktif. Silakan login.";
     }
 
     // =========================================================

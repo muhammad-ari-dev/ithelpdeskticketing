@@ -1,22 +1,29 @@
 package com.juaracoding.ITHelpdeskTicketing.service;
 
-import com.juaracoding.ITHelpdeskTicketing.dto.ChangePasswordDTO;
-import com.juaracoding.ITHelpdeskTicketing.dto.DisableUserDTO;
-import com.juaracoding.ITHelpdeskTicketing.dto.LeadResponseDTO;
-import com.juaracoding.ITHelpdeskTicketing.dto.RegisDTO;
-import com.juaracoding.ITHelpdeskTicketing.dto.SetPasswordDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.response.ProfileResponseDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.validation.ChangePasswordDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.response.DisableUserDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.response.LeadResponseDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.validation.RegisDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.validation.SetPasswordDTO;
+import com.juaracoding.ITHelpdeskTicketing.handler.ResponseHandler;
 import com.juaracoding.ITHelpdeskTicketing.model.Employee;
 import com.juaracoding.ITHelpdeskTicketing.model.Role;
 import com.juaracoding.ITHelpdeskTicketing.repository.EmployeeRepo;
 import com.juaracoding.ITHelpdeskTicketing.repository.RoleRepo;
 import com.juaracoding.ITHelpdeskTicketing.security.BcryptImpl;
 import com.juaracoding.ITHelpdeskTicketing.util.ConstantMessage;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -31,6 +38,34 @@ public class EmployeeService {
 
     @Autowired
     private EmailService emailService;
+
+    public ResponseEntity<Object> getProfile(String username, HttpServletRequest request){
+
+        try {
+            Optional<Employee> optionalEmployee = employeeRepo.findByUserName(username);
+            if (optionalEmployee.isEmpty()) {
+                return new ResponseHandler()
+                        .handleResponse(ConstantMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND, null, request);
+            }
+
+            Employee employeeDb = optionalEmployee.get();
+
+            ProfileResponseDTO profile = new ProfileResponseDTO();
+            profile.setUsername(employeeDb.getUserName());
+            profile.setEmployeeName(employeeDb.getEmployeeName());
+            profile.setRoleName(employeeDb.getRole().getRoleName());
+            profile.setRoleDesc(employeeDb.getRole().getRoleDesc());
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", java.util.Locale.ENGLISH);
+            profile.setCreatedAt(employeeDb.getCreatedAt().format(formatter));
+
+            return new ResponseHandler()
+                    .handleResponse(ConstantMessage.OK, HttpStatus.OK, profile, request);
+
+        } catch (Exception e) {
+            return new ResponseHandler()
+                    .handleResponse(ConstantMessage.TOKEN_ERROR, HttpStatus.UNAUTHORIZED, null, request);
+        }
+    }
 
     // =========================================================
     // FITUR 1: REGISTRASI EMPLOYEE (oleh Admin)
@@ -78,26 +113,6 @@ public class EmployeeService {
         emailService.sendMagicLink(employee.getEmail(), magicToken);
 
         return "Sukses: Employee berhasil didaftarkan! Email setup password sudah dikirim ke " + employee.getEmail();
-    }
-
-    // =========================================================
-    // FITUR 2: SET PASSWORD (oleh Employee via Magic Link)
-    // =========================================================
-    @Transactional
-    public String setPassword(SetPasswordDTO dto) {
-        if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
-            throw new RuntimeException("Password baru dan konfirmasi tidak cocok!");
-        }
-
-        Employee employee = employeeRepo.findByMagicToken(dto.getMagicToken())
-                .orElseThrow(() -> new RuntimeException("Token tidak valid atau sudah kedaluwarsa!"));
-
-        employee.setPassword(BcryptImpl.hash(employee.getUserName() + dto.getNewPassword()));
-        employee.setAccountStatus("ACTIVE");
-        employee.setMagicToken(null);
-        employeeRepo.save(employee);
-
-        return "Password berhasil diset! Akun sekarang sudah aktif. Silakan login.";
     }
 
     // =========================================================

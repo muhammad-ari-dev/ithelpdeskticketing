@@ -1,6 +1,7 @@
 package com.juaracoding.ITHelpdeskTicketing.controller;
 
-import com.juaracoding.ITHelpdeskTicketing.dto.LoginDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.validation.LoginDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.validation.SetPasswordDTO;
 import com.juaracoding.ITHelpdeskTicketing.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -39,5 +40,15 @@ public class AuthController {
             @Valid @RequestBody LoginDTO loginDTO,
             HttpServletRequest request) {
         return authService.login(authService.mapToEntity(loginDTO), request);
+    }
+
+    @PostMapping("/set-password")
+    public ResponseEntity<?> setPassword(@Valid @RequestBody SetPasswordDTO dto) {
+        try {
+            String result = authService.setPassword(dto);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

@@ -1,4 +1,4 @@
-package com.juaracoding.ITHelpdeskTicketing.dto;
+package com.juaracoding.ITHelpdeskTicketing.dto.validation;
 
 import com.juaracoding.ITHelpdeskTicketing.util.ConstantMessage;
 import jakarta.validation.constraints.Email;

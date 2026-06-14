@@ -1,4 +1,4 @@
-package com.juaracoding.ITHelpdeskTicketing.dto;
+package com.juaracoding.ITHelpdeskTicketing.dto.response;
 
 import com.juaracoding.ITHelpdeskTicketing.model.Employee;
 import lombok.Data;

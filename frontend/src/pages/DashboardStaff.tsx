@@ -38,10 +38,10 @@ export default function DashboardStaff() {
   const myPoints = staffUser?.points || 0;
 
   useEffect(() => {
-    if (!currentUser || currentUser.role !== "EMPLOYEE") {
-      navigate("/login");
-      return;
-    }
+    // if (!currentUser || currentUser.roleName !== "EMPLOYEE") {
+    //   navigate("/");
+    //   return;
+    // }
 
     const saved = localStorage.getItem("ticketsData");
     if (saved) {
@@ -72,7 +72,7 @@ export default function DashboardStaff() {
 
   const handleSignOut = () => {
     localStorage.removeItem("currentUser");
-    navigate("/login");
+    navigate("/");
   };
 
   const updateTicketStatus = (ticketId: string, newStatus: string) => {

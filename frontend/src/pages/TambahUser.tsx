@@ -77,7 +77,7 @@ export default function TambahUser() {
 
   const handleSignOut = () => {
     localStorage.removeItem("currentUser");
-    navigate("/login");
+    navigate("/");
   };
 
   // ===== HANDLERS =====
@@ -615,7 +615,7 @@ export default function TambahUser() {
                               .filter((s) => !selectedStaffIds.includes(s.id))
                               .map((s) => (
                                 <option key={s.id} value={s.id}>
-                                  {s.name} ({s.role})
+                                  {s.name} ({s.roleName})
                                 </option>
                               ))}
                           </select>

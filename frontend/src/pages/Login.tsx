@@ -405,13 +405,10 @@ export default function Login() {
 
             {/* ================= FOOTER ================= */}
             <div
-              className="mt-8 pt-5 border-t border-slate-100 opacity-0 animate-slide-up-fade"
+              className="mt-4 border-t border-slate-100 opacity-0 animate-slide-up-fade"
               style={{ animationDelay: "0.6s" }}
             >
-              <div className="flex justify-between items-center">
-                <button className="text-left text-[13px] font-semibold text-slate-400 hover:text-blue-600 transition-colors duration-300">
-                  Lupa sandi?
-                </button>
+              <div className="flex justify-end items-center">
                 <div className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></div>
                   <span className="text-[11px] font-bold text-slate-400">

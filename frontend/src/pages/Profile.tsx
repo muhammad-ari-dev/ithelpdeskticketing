@@ -1,35 +1,90 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserContext } from '../context/UserContext';
+import { authApi } from '../api/authApi';
+
+interface UserProfile { 
+    id: string,
+    name: string,
+    username: string,
+    roleName: string,
+    roleDesc: string,
+    avatar: string,
+    joinDate: string,
+    status: string,
+    email: string,
+    phone: string,
+    staffIds: [],
+    leaderId: string,
+    password: string,
+    points: string,
+}
 
 export default function Profile() {
     const navigate = useNavigate();
-    const { users } = useUserContext();
+    //const { users } = useUserContext();
+    const [user, setUser] = useState<UserProfile | null>(null);
 
     // Mengambil session yang sedang aktif
-    const currentUserSession = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    //const currentUserSession = JSON.parse(localStorage.getItem('currentUser') || '{}');
     // Sinkronisasi data real-time dengan UserContext
-    let user = users.find(u => String(u.id) === String(currentUserSession?.id));
+    //let user = users.find(u => String(u.id) === String(currentUserSession?.id));
 
     // Fallback khusus untuk akun hardcoded seperti 'admin' Master
-    if (!user && currentUserSession?.id) {
-        user = {
-            id: currentUserSession.id,
-            name: currentUserSession.name || 'System Administrator',
-            username: currentUserSession.username || 'admin',
-            roleName: currentUserSession.roleName || 'ADMIN',
-            roleDesc: currentUserSession.roleDesc,
-            avatar: 'https://i.pravatar.cc/150?img=68',
-            joinDate: currentUserSession.createdAt,
-            status: 'Aktif',
-            email: currentUserSession.email,
-            phone: '-',
-            staffIds: [],
-            leaderId: null,
-            password: 'admin',
-            points: 0,
+    // if (!user && currentUserSession?.id) {
+    //     user = {
+    //         id: currentUserSession.id,
+    //         name: currentUserSession.employeeName || 'System Administrator',
+    //         username: currentUserSession.username || 'admin',
+    //         roleName: currentUserSession.roleName || 'ADMIN',
+    //         roleDesc: currentUserSession.roleDesc,
+    //         avatar: 'https://i.pravatar.cc/150?img=68',
+    //         joinDate: currentUserSession.createdAt,
+    //         status: 'Aktif',
+    //         email: currentUserSession.email,
+    //         phone: '-',
+    //         staffIds: [],
+    //         leaderId: null,
+    //         password: 'admin',
+    //         points: 0,
+    //     };
+    // }
+    const handleSignOut = () => {
+        localStorage.removeItem('currentUser');
+        navigate('/');
+    };
+
+    useEffect(() => {
+        const loadProfileData = async () => {
+            try {
+                const response = await authApi.getProfile();
+                
+                const profileData = response.data?.data || response.data;
+
+                setUser({
+                    id: "",
+                    name: profileData.employeeName || '-',
+                    username: profileData.username || '-',
+                    roleName: profileData.roleName || '-',
+                    roleDesc: profileData.roleDesc || '-',
+                    avatar: 'https://i.pravatar.cc/150?img=68',
+                    joinDate: profileData.createdAt,
+                    status: "",
+                    email: "",
+                    phone: "",
+                    staffIds: [],
+                    leaderId: "",
+                    password: "",
+                    points: "",
+                });
+            } catch (err) {
+                console.error("Gagal memuat profil dari API:", err);
+                handleSignOut();
+            }
         };
-    }
+
+        loadProfileData();
+    }, []);
 
     // Form state untuk ganti password
     const [oldPassword, setOldPassword] = useState('');

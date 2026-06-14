@@ -67,7 +67,7 @@ export default function DashboardAdmin() {
 
     const handleSignOut = () => {
         localStorage.removeItem('currentUser');
-        navigate('/login');
+        navigate('/');
     };
 
     // Filter Data

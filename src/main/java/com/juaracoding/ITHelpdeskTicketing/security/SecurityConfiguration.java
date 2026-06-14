@@ -31,14 +31,9 @@ public class SecurityConfiguration {
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(authService);// penulisan di springboot versi 3
+        authProvider.setUserDetailsService(authService);
         return authProvider;
     }
-
-    /*
-        401 -> Otentikasi
-        403 -> Forbiden / Otorisasi
-     */
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -58,6 +53,31 @@ public class SecurityConfiguration {
         return source;
     }
 
+    /**
+     * SECURITY FILTER CHAIN
+     *
+     * Menentukan endpoint mana yang:
+     *   - BEBAS diakses tanpa login (permitAll)
+     *   - WAJIB login dulu (authenticated)
+     *
+     * PENJELASAN TIAP ENDPOINT:
+     *
+     * ✅ PERMIT ALL (tidak butuh token):
+     *   /api/auth/**          → login (tidak mungkin punya token sebelum login)
+     *   /api/employee/set-password  → employee set password via magic link
+     *                                 (belum punya token karena belum pernah login)
+     *   /api/employee/leads   → dropdown lead saat register
+     *                           (admin yang register tidak selalu punya token baru)
+     *   /swagger-ui/**        → dokumentasi API
+     *   /v3/api-docs/**       → dokumentasi API
+     *
+     * 🔒 AUTHENTICATED (wajib bawa JWT token):
+     *   /api/employee/register        → hanya admin yang bisa register employee
+     *   /api/employee/disable         → hanya admin yang bisa disable akun
+     *   /api/employee/reset-password  → hanya admin yang bisa reset password orang lain
+     *   /api/employee/change-password → employee yang sedang login ganti password sendiri
+     *   Semua endpoint lain           → anyRequest().authenticated()
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtFilter filter) throws Exception {
         http
@@ -65,12 +85,15 @@ public class SecurityConfiguration {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(request -> request
                 .requestMatchers(
+                    // Endpoint bebas tanpa token
                     "/api/test/running",
                     "/api/auth/**",
+                    "/api/employee/set-password",  // set password via magic link (belum punya token)
                     "/swagger-ui/**",
                     "/swagger-ui.html",
                     "/v3/api-docs/**"
                 ).permitAll()
+                // Semua endpoint lain wajib bawa JWT token
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())

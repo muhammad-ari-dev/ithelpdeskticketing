@@ -1,5 +1,7 @@
 package com.juaracoding.ITHelpdeskTicketing.service;
 
+import com.juaracoding.ITHelpdeskTicketing.dto.ChangePasswordDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.DisableUserDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.LeadResponseDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.RegisDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.SetPasswordDTO;
@@ -8,8 +10,10 @@ import com.juaracoding.ITHelpdeskTicketing.model.Role;
 import com.juaracoding.ITHelpdeskTicketing.repository.EmployeeRepo;
 import com.juaracoding.ITHelpdeskTicketing.repository.RoleRepo;
 import com.juaracoding.ITHelpdeskTicketing.security.BcryptImpl;
+import com.juaracoding.ITHelpdeskTicketing.util.ConstantMessage;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,27 +35,8 @@ public class EmployeeService {
     // =========================================================
     // FITUR 1: REGISTRASI EMPLOYEE (oleh Admin)
     // =========================================================
-
-    /**
-     * Mendaftarkan employee baru dan mengirim magic link ke email mereka.
-     *
-     * ALUR:
-     *   1. Cek duplikasi userName dan email
-     *   2. Mapping data dari DTO ke Entity
-     *   3. Set role berdasarkan roleName
-     *   4. Logika hierarki: LEAD tidak punya atasan, EMPLOYEE wajib punya Lead
-     *   5. Status awal: PENDING (belum bisa login sampai set password)
-     *   6. Generate magic token (UUID) → simpan ke DB
-     *   7. Kirim email berisi link dengan magic token
-     *
-     * @Transactional → Jika ada error di tengah proses (misal gagal kirim email),
-     *                  semua perubahan DB di-rollback otomatis.
-     *                  Mencegah data setengah jadi tersimpan di DB.
-     */
     @Transactional
     public String registerEmployee(RegisDTO dto) {
-
-        // Validasi duplikasi — cek sebelum insert untuk hindari constraint violation di DB
         if (employeeRepo.existsByUserName(dto.getUserName())) {
             return "Error: Username sudah dipakai!";
         }
@@ -59,47 +44,22 @@ public class EmployeeService {
             return "Error: Email sudah terdaftar!";
         }
 
-        // Mapping field dari DTO ke Entity
         Employee employee = new Employee();
         employee.setEmployeeName(dto.getEmployeeName());
         employee.setUserName(dto.getUserName());
         employee.setEmail(dto.getEmail());
         employee.setNoHp(dto.getNoHp());
-
-        /**
-         * Password default sementara
-         *
-         * Employee belum punya password sungguhan saat ini.
-         * Password ini TIDAK akan dipakai untuk login karena:
-         *   1. Status akun masih PENDING → login ditolak
-         *   2. Saat set-password nanti, password ini akan ditimpa
-         *
-         * Ini hanya untuk memenuhi constraint NOT NULL di kolom Password di DB.
-         */
         employee.setPassword(BcryptImpl.hash(dto.getUserName() + "DEFAULT_PASSWORD_TEMP"));
         employee.setCreatedBy("ADMIN");
 
-        // Set role berdasarkan roleName yang dikirim — cari di DB
         Role role = roleRepo.findByRoleName(dto.getRoleName())
                 .orElseThrow(() -> new RuntimeException("Error: Role '" + dto.getRoleName() + "' tidak ditemukan!"));
         employee.setRole(role);
 
-        /**
-         * Logika Hierarki Lead vs Employee
-         *
-         * LEAD (atau ADMINISTRATOR):
-         *   → Tidak punya atasan (lead = null)
-         *
-         * EMPLOYEE:
-         *   → WAJIB punya Lead
-         *   → leadID dari DTO di-parse ke UUID lalu dicari di DB
-         *   → Jika leadID kosong atau tidak ditemukan → throw error
-         */
         if ("LEAD".equalsIgnoreCase(role.getRoleName()) ||
                 "ADMINISTRATOR".equalsIgnoreCase(role.getRoleName())) {
             employee.setLead(null);
         } else {
-            // role EMPLOYEE — wajib ada lead
             if (dto.getLeadID() == null || dto.getLeadID().isEmpty()) {
                 throw new RuntimeException("Error: Staff wajib memiliki Lead!");
             }
@@ -109,108 +69,243 @@ public class EmployeeService {
             employee.setLead(atasan);
         }
 
-        // Status PENDING → tidak bisa login sampai klik magic link dan set password
         employee.setAccountStatus("PENDING");
 
-        /**
-         * Generate Magic Token
-         *
-         * UUID.randomUUID() → menghasilkan string unik sepanjang 36 karakter
-         * contoh: "550e8400-e29b-41d4-a716-446655440000"
-         *
-         * Token ini dikirim via email sebagai query param link:
-         * http://frontend.com/set-password?token=550e8400-e29b-41d4-a716-446655440000
-         *
-         * Saat employee klik link → frontend kirim token ini ke endpoint /set-password
-         */
         String magicToken = UUID.randomUUID().toString();
         employee.setMagicToken(magicToken);
 
-        // Simpan ke DB
         employeeRepo.save(employee);
-
-        // Kirim email magic link
         emailService.sendMagicLink(employee.getEmail(), magicToken);
 
         return "Sukses: Employee berhasil didaftarkan! Email setup password sudah dikirim ke " + employee.getEmail();
     }
 
     // =========================================================
-    // FITUR 3: SET PASSWORD (oleh Employee via Magic Link)
+    // FITUR 2: SET PASSWORD (oleh Employee via Magic Link)
     // =========================================================
-
-    /**
-     * Mengaktifkan akun employee dengan mengeset password baru.
-     *
-     * ALUR:
-     *   1. Validasi newPassword == confirmPassword
-     *   2. Cari employee berdasarkan magicToken
-     *   3. Hash password baru dengan pola: userName + newPassword
-     *   4. Ubah status dari PENDING → ACTIVE
-     *   5. Hapus magicToken (one-time use!)
-     *   6. Simpan
-     *
-     * @Transactional → Rollback otomatis jika ada error
-     */
     @Transactional
     public String setPassword(SetPasswordDTO dto) {
-
-        // Validasi kesamaan password — tidak bisa dilakukan di @Pattern (beda field)
-        // Ini harus tetap ada di service
         if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
             throw new RuntimeException("Password baru dan konfirmasi tidak cocok!");
         }
 
-        // Cari employee berdasarkan magic token
-        // Jika tidak ditemukan → token salah atau sudah pernah dipakai (sudah null)
         Employee employee = employeeRepo.findByMagicToken(dto.getMagicToken())
                 .orElseThrow(() -> new RuntimeException("Token tidak valid atau sudah kedaluwarsa!"));
 
-        /**
-         * Hash password baru
-         *
-         * POLA: BcryptImpl.hash(userName + newPassword)
-         * HARUS KONSISTEN dengan verifikasi di login():
-         *   BcryptImpl.verifyHash(userName + inputPassword, hashedPassword)
-         */
         employee.setPassword(BcryptImpl.hash(employee.getUserName() + dto.getNewPassword()));
-
-        // Aktifkan akun → sekarang bisa login
         employee.setAccountStatus("ACTIVE");
-
-        /**
-         * Hapus magic token setelah dipakai
-         *
-         * PENTING! Magic token bersifat ONE-TIME USE.
-         * Setelah dipakai untuk set password, harus langsung dihapus (set null).
-         * Jika tidak dihapus → link email yang sama bisa dipakai berkali-kali
-         * oleh siapa saja yang punya akses ke email tersebut.
-         */
         employee.setMagicToken(null);
-
         employeeRepo.save(employee);
 
         return "Password berhasil diset! Akun sekarang sudah aktif. Silakan login.";
     }
 
     // =========================================================
-    // FITUR 4: GET ALL LEADS (untuk dropdown saat register Employee)
+    // FITUR 3: GET ALL LEADS
     // =========================================================
-
-    /**
-     * Mengambil semua employee dengan role LEAD.
-     *
-     * Dipakai di endpoint GET /api/auth/leads.
-     * Frontend menampilkan daftar ini sebagai dropdown saat Admin
-     * mendaftarkan Employee baru — untuk memilih siapa atasannya.
-     *
-     * Return LeadResponseDTO (bukan Employee entity) → hanya kirim
-     * field yang dibutuhkan frontend: id, nama, username, email.
-     */
     public List<LeadResponseDTO> getAllLeads() {
         return employeeRepo.findByRole_RoleNameIgnoreCase("LEAD")
                 .stream()
                 .map(LeadResponseDTO::new)
                 .collect(Collectors.toList());
+    }
+
+    // =========================================================
+    // FITUR 4: DISABLE USER (oleh Admin)
+    // =========================================================
+
+    /**
+     * Admin menonaktifkan akun employee/lead.
+     *
+     * ALUR:
+     *   1. Cari employee berdasarkan ID
+     *   2. Cek apakah akun sudah INACTIVE (tidak perlu proses lagi)
+     *   3. Ubah status dari ACTIVE → INACTIVE
+     *   4. Simpan
+     *
+     * MENGAPA STATUS "INACTIVE" BUKAN DIHAPUS?
+     * → Soft delete — data tetap ada di DB untuk keperluan audit/history.
+     *   Kalau dihapus, riwayat tiket yang dibuat employee tersebut bisa ikut hilang.
+     *
+     * EFEKNYA:
+     *   → Saat employee ini coba login, AuthService cek accountStatus == "ACTIVE"
+     *   → Karena INACTIVE, login akan ditolak dengan pesan "Akun Belum Aktif"
+     *
+     * @Transactional → Rollback otomatis jika ada error saat simpan
+     */
+    @Transactional
+    public String disableUser(DisableUserDTO dto) {
+
+        // Parse String UUID → tipe UUID
+        // Aman karena sudah divalidasi @Pattern di DTO sebelum sampai sini
+        UUID employeeId = UUID.fromString(dto.getEmployeeId());
+
+        // Cari employee di DB berdasarkan ID
+        Employee employee = employeeRepo.findById(employeeId)
+                .orElseThrow(() -> new RuntimeException(ConstantMessage.USER_NOT_FOUND));
+
+        // Cek apakah akun sudah tidak aktif — tidak perlu proses dua kali
+        if ("INACTIVE".equals(employee.getAccountStatus())) {
+            return ConstantMessage.ALREADY_INACTIVE;
+        }
+
+        // Ubah status → INACTIVE
+        employee.setAccountStatus("INACTIVE");
+        employee.setUpdatedBy("ADMIN");
+        employeeRepo.save(employee);
+
+        return ConstantMessage.SUCCESS_DISABLE_USER + ": " + employee.getEmployeeName();
+    }
+
+
+
+    // =========================================================
+    // FITUR 5: RESET PASSWORD USER (oleh Admin)
+    // =========================================================
+
+    /**
+     * Admin mereset password employee/lead yang lupa password.
+     *
+     * ALUR:
+     *   1. Cari employee berdasarkan ID
+     *   2. Generate magic token baru (UUID)
+     *   3. Simpan magic token ke DB
+     *   4. Ubah status ke PENDING (tidak bisa login sampai set password baru)
+     *   5. Kirim magic link ke email employee
+     *
+     * MENGAPA STATUS DIUBAH KE PENDING?
+     * → Keamanan! Selama employee belum set password baru via magic link,
+     *   mereka tidak bisa login. Ini mencegah akun yang passwordnya di-reset
+     *   tetap bisa diakses dengan password lama.
+     *
+     * FLOW SELANJUTNYA (setelah method ini):
+     *   Employee klik link di email
+     *   → Frontend buka halaman set-password
+     *   → Employee input password baru + konfirmasi
+     *   → Hit endpoint POST /api/employee/set-password
+     *   → Status kembali ACTIVE, magic token dihapus
+     *
+     * @Transactional → Rollback otomatis jika gagal kirim email
+     */
+    @Transactional
+    public String resetPassUser(DisableUserDTO dto) {
+        // Pakai DisableUserDTO yang sama karena sama-sama hanya butuh employeeId
+        // Tidak perlu buat DTO baru yang isinya sama persis
+
+        UUID employeeId = UUID.fromString(dto.getEmployeeId());
+
+        // Cari employee di DB
+        Employee employee = employeeRepo.findById(employeeId)
+                .orElseThrow(() -> new RuntimeException(ConstantMessage.USER_NOT_FOUND));
+
+        /**
+         * Generate magic token baru
+         *
+         * UUID.randomUUID() → string unik 36 karakter
+         * Token lama (jika ada) akan ditimpa dengan yang baru.
+         * Jadi link email lama otomatis tidak berlaku lagi.
+         */
+        String magicToken = UUID.randomUUID().toString();
+        employee.setMagicToken(magicToken);
+
+        /**
+         * Ubah status ke PENDING
+         *
+         * MENGAPA? Agar employee tidak bisa login dengan password lama
+         * selama proses reset belum selesai.
+         * Status akan kembali ACTIVE setelah employee set password baru
+         * via endpoint /set-password.
+         */
+        employee.setAccountStatus("PENDING");
+        employee.setUpdatedBy("ADMIN");
+        employeeRepo.save(employee);
+
+        // Kirim email magic link ke employee
+        // Pakai method yang sama dengan saat register
+        emailService.sendMagicLink(employee.getEmail(), magicToken);
+
+        return ConstantMessage.SUCCESS_RESET_PASS + ": " + employee.getEmail();
+    }
+
+    // =========================================================
+    // FITUR 6: CHANGE PASSWORD (oleh Employee sendiri)
+    // =========================================================
+
+    /**
+     * Employee/Lead mengganti password mereka sendiri.
+     *
+     * ALUR:
+     *   1. Ambil username dari JWT token (SecurityContext)
+     *   2. Cari employee di DB berdasarkan username
+     *   3. Verifikasi password lama
+     *   4. Cek password baru != password lama
+     *   5. Cek newPassword == confirmPassword
+     *   6. Hash password baru dan simpan
+     *
+     * MENGAPA AMBIL USERNAME DARI TOKEN, BUKAN DARI REQUEST BODY?
+     * → Lebih aman! Employee tidak bisa ganti password orang lain
+     *   dengan mengirim username orang lain di request body.
+     *   Username diambil dari JWT token yang sudah diverifikasi
+     *   oleh JwtFilter — dijamin adalah pemilik akun yang sedang login.
+     *
+     * @Transactional → Rollback otomatis jika ada error saat simpan
+     */
+    @Transactional
+    public String changePassword(ChangePasswordDTO dto) {
+
+        /**
+         * Ambil username dari SecurityContext
+         *
+         * SecurityContext adalah "tempat penyimpanan sementara" yang diisi
+         * oleh JwtFilter setiap kali ada request dengan token valid.
+         *
+         * Analoginya: seperti kartu tanda masuk yang kamu tunjukkan ke satpam,
+         * satpam (JwtFilter) sudah verifikasi dan catat nama kamu,
+         * sekarang kita tinggal ambil catatan nama tersebut.
+         */
+        String username = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName(); // ambil username dari token JWT yang sudah diverifikasi
+
+        // Cari employee di DB berdasarkan username dari token
+        Employee employee = employeeRepo.findByUserName(username)
+                .orElseThrow(() -> new RuntimeException(ConstantMessage.USER_NOT_FOUND));
+
+        /**
+         * Verifikasi password lama
+         *
+         * POLA: BcryptImpl.verifyHash(userName + oldPassword, hashedPassword)
+         * HARUS KONSISTEN dengan cara password di-hash saat setPassword()
+         */
+        if (!BcryptImpl.verifyHash(employee.getUserName() + dto.getOldPassword(), employee.getPassword())) {
+            throw new RuntimeException(ConstantMessage.OLD_PASSWORD_WRONG);
+        }
+
+        /**
+         * Cek password baru tidak sama dengan password lama
+         *
+         * MENGAPA PERLU DICEK?
+         * Tidak ada gunanya "ganti" password kalau isinya sama.
+         * Ini juga best practice keamanan — memaksa user benar-benar
+         * menggunakan password yang berbeda.
+         *
+         * Cara cek: verifikasi apakah newPassword cocok dengan hash yang ada.
+         * Jika cocok berarti sama dengan password lama → tolak.
+         */
+        if (BcryptImpl.verifyHash(employee.getUserName() + dto.getNewPassword(), employee.getPassword())) {
+            throw new RuntimeException(ConstantMessage.SAME_PASSWORD);
+        }
+
+        // Cek newPassword == confirmPassword
+        if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
+            throw new RuntimeException("Password baru dan konfirmasi tidak cocok!");
+        }
+
+        // Hash password baru dan simpan
+        employee.setPassword(BcryptImpl.hash(employee.getUserName() + dto.getNewPassword()));
+        employee.setUpdatedBy(username);
+        employeeRepo.save(employee);
+
+        return ConstantMessage.SUCCESS_CHANGE_PASS;
     }
 }

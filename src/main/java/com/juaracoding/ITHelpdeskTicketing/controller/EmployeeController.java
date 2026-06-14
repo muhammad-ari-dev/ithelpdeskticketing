@@ -1,5 +1,7 @@
 package com.juaracoding.ITHelpdeskTicketing.controller;
 
+import com.juaracoding.ITHelpdeskTicketing.dto.ChangePasswordDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.DisableUserDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.RegisDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.SetPasswordDTO;
 import com.juaracoding.ITHelpdeskTicketing.service.EmployeeService;
@@ -18,26 +20,12 @@ public class EmployeeController {
     @Autowired
     private EmployeeService employeeService;
 
-    /**
-     * ENDPOINT REGISTER
-     *
-     * PERUBAHAN: Ditambahkan @Valid di parameter @RequestBody.
-     *
-     * Sebelumnya tidak ada @Valid, sehingga validasi di RegisDTO
-     * (seperti @Pattern, @Email, @NotBlank) TIDAK pernah dijalankan
-     * meskipun sudah ditulis.
-     *
-     * Dengan @Valid:
-     *   → Format email, nomor HP, username, nama, dan role
-     *     akan divalidasi otomatis sebelum masuk ke authService.registerEmployee()
-     *
-     * PERUBAHAN LAIN: Error handling dipindah ke GlobalExceptionHandler,
-     * tapi try-catch ini tetap untuk error bisnis logic dari service
-     * (misal: "Username sudah dipakai!").
-     */
+    // =========================================================
+    // ENDPOINT YANG SUDAH ADA (tidak diubah)
+    // =========================================================
+
     @PostMapping("/register")
-    public ResponseEntity<?> registerEmployee(
-            @Valid @RequestBody RegisDTO regisDTO) {
+    public ResponseEntity<?> registerEmployee(@Valid @RequestBody RegisDTO regisDTO) {
         try {
             String result = employeeService.registerEmployee(regisDTO);
             return ResponseEntity.ok(result);
@@ -46,23 +34,8 @@ public class EmployeeController {
         }
     }
 
-    /**
-     * ENDPOINT SET PASSWORD
-     *
-     * PERUBAHAN: Ditambahkan @Valid di parameter @RequestBody.
-     *
-     * Sebelumnya tidak ada @Valid, sehingga validasi kekuatan password
-     * (regex di SetPasswordDTO) tidak pernah berjalan.
-     *
-     * Dengan @Valid:
-     *   → magicToken akan dicek format UUID-nya
-     *   → newPassword & confirmPassword akan dicek kekuatannya
-     *      (minimal 8 karakter, huruf besar, huruf kecil, angka, simbol)
-     *   → Cek kesamaan newPassword == confirmPassword tetap di service
-     */
     @PostMapping("/set-password")
-    public ResponseEntity<?> setPassword(
-            @Valid @RequestBody SetPasswordDTO dto) {
+    public ResponseEntity<?> setPassword(@Valid @RequestBody SetPasswordDTO dto) {
         try {
             String result = employeeService.setPassword(dto);
             return ResponseEntity.ok(result);
@@ -75,6 +48,105 @@ public class EmployeeController {
     public ResponseEntity<?> getLeads() {
         try {
             return ResponseEntity.ok(employeeService.getAllLeads());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // =========================================================
+    // ENDPOINT BARU — TASK ARI
+    // =========================================================
+
+    /**
+     * DISABLE USER — Admin nonaktifkan akun employee/lead
+     *
+     * Method: PATCH (bukan POST/DELETE)
+     *
+     * MENGAPA PATCH?
+     * → PATCH dipakai untuk update sebagian data (partial update).
+     *   Kita hanya update field accountStatus, bukan semua data employee.
+     *   Ini lebih semantik/bermakna dibanding POST.
+     *
+     * Endpoint: PATCH /api/employee/disable
+     * Butuh: JWT Token (endpoint ini protected, hanya admin yang boleh)
+     * Body: { "employeeId": "uuid-employee" }
+     *
+     * Flow:
+     *   Admin klik disable di UI
+     *   → Frontend kirim PATCH request dengan employeeId
+     *   → Backend ubah accountStatus → INACTIVE
+     *   → Employee tidak bisa login lagi
+     */
+    @PatchMapping("/disable")
+    public ResponseEntity<?> disableUser(@Valid @RequestBody DisableUserDTO dto) {
+        try {
+            String result = employeeService.disableUser(dto);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    /**
+     * RESET PASSWORD USER — Admin reset password employee/lead yang lupa password
+     *
+     * Method: PATCH
+     * Endpoint: PATCH /api/employee/reset-password
+     * Butuh: JWT Token (hanya admin yang boleh)
+     * Body: { "employeeId": "uuid-employee" }
+     *
+     * MENGAPA PAKAI DisableUserDTO YANG SAMA?
+     * → Karena reset password juga hanya butuh employeeId.
+     *   Tidak perlu buat DTO baru yang isinya persis sama.
+     *   Ini prinsip DRY (Don't Repeat Yourself).
+     *
+     * Flow:
+     *   Admin klik reset password di UI
+     *   → Frontend kirim PATCH request dengan employeeId
+     *   → Backend generate magic token baru
+     *   → Status employee → PENDING (tidak bisa login sampai set password baru)
+     *   → Kirim magic link ke email employee
+     *   → Employee klik link → hit endpoint /set-password
+     *   → Status kembali ACTIVE
+     */
+    @PatchMapping("/reset-password")
+    public ResponseEntity<?> resetPassUser(@Valid @RequestBody DisableUserDTO dto) {
+        try {
+            String result = employeeService.resetPassUser(dto);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    /**
+     * CHANGE PASSWORD — Employee/Lead ganti password sendiri
+     *
+     * Method: PATCH
+     * Endpoint: PATCH /api/employee/change-password
+     * Butuh: JWT Token (employee yang sedang login)
+     * Body: { "oldPassword": "...", "newPassword": "...", "confirmPassword": "..." }
+     *
+     * PERBEDAAN DENGAN RESET PASSWORD:
+     *   resetPassUser → dilakukan ADMIN untuk orang lain, tidak perlu password lama
+     *   changePassword → dilakukan DIRI SENDIRI, wajib verifikasi password lama dulu
+     *
+     * KEAMANAN:
+     *   Username TIDAK diambil dari request body, tapi dari JWT token.
+     *   Sehingga tidak mungkin employee A bisa ganti password employee B.
+     *
+     * Flow:
+     *   Employee login → buka halaman ganti password
+     *   → Input password lama + password baru + konfirmasi
+     *   → Frontend kirim PATCH request (dengan JWT token di header)
+     *   → Backend verifikasi password lama dulu
+     *   → Jika benar → hash password baru → simpan
+     */
+    @PatchMapping("/change-password")
+    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordDTO dto) {
+        try {
+            String result = employeeService.changePassword(dto);
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

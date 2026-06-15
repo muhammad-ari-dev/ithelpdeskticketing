@@ -77,7 +77,7 @@ export default function TambahUser() {
 
   const handleSignOut = () => {
     localStorage.removeItem("currentUser");
-    navigate("/");
+    navigate("/login");
   };
 
   // ===== HANDLERS =====
@@ -328,19 +328,17 @@ export default function TambahUser() {
               />
             </svg>
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 bg-white hover:bg-blue-50/50 py-1.5 px-3 rounded-full border border-slate-200/80 cursor-pointer shadow-sm hover:shadow transition-all duration-300" onClick={() => navigate('/profile')}>
             <div className="text-right hidden sm:block">
-              <p className="text-xs font-black uppercase tracking-widest text-[#3B82F6]">
-                Welcome Back
+              <p className="text-slate-800 font-extrabold text-xs leading-none">
+                {sessionUser.name || sessionUser.username}
               </p>
-              <p className="text-sm font-extrabold text-slate-800">
-                {sessionUser.username}
+              <p className="text-blue-500 text-[10px] font-bold mt-1">
+                Administrator
               </p>
             </div>
-            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shrink-0 shadow-md">
-              <span className="text-[#3B82F6] font-black text-sm">
-                {sessionUser.username?.charAt(0)?.toUpperCase()}
-              </span>
+            <div className="w-8 h-8 rounded-full bg-blue-600/90 flex items-center justify-center shadow-inner text-white font-bold text-xs">
+              {sessionUser.name ? sessionUser.name.charAt(0).toUpperCase() : sessionUser.username?.charAt(0)?.toUpperCase()}
             </div>
           </div>
         </div>
@@ -361,17 +359,17 @@ export default function TambahUser() {
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-3 bg-white hover:bg-blue-50/50 py-1.5 px-3 rounded-full border border-slate-200/80 cursor-pointer shadow-sm hover:shadow transition-all duration-300" onClick={() => navigate('/profile')}>
               <div className="text-right">
-                <h3 className="text-white font-black text-[15px] leading-tight">
-                  {sessionUser.username}
-                </h3>
-                <p className="text-blue-100 font-bold text-[11px]">Admin</p>
+                <p className="text-slate-800 font-extrabold text-xs leading-none">
+                  {sessionUser.name || sessionUser.username}
+                </p>
+                <p className="text-blue-500 text-[10px] font-bold mt-1">
+                  Administrator
+                </p>
               </div>
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center border-2 border-white/40 shadow-lg">
-                <span className="text-white font-black text-sm">
-                  {sessionUser.username?.charAt(0)?.toUpperCase()}
-                </span>
+              <div className="w-8 h-8 rounded-full bg-blue-600/90 flex items-center justify-center shadow-inner text-white font-bold text-xs">
+                {sessionUser.name ? sessionUser.name.charAt(0).toUpperCase() : sessionUser.username?.charAt(0)?.toUpperCase()}
               </div>
             </div>
           </div>
@@ -615,7 +613,7 @@ export default function TambahUser() {
                               .filter((s) => !selectedStaffIds.includes(s.id))
                               .map((s) => (
                                 <option key={s.id} value={s.id}>
-                                  {s.name} ({s.roleName})
+                                  {s.name} ({s.role})
                                 </option>
                               ))}
                           </select>

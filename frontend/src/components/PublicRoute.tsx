@@ -1,4 +1,3 @@
-import { jwtDecode } from 'jwt-decode';
 import { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 
@@ -7,12 +6,12 @@ interface PublicRouteProps {
 }
 
 interface CurrentUser {
-    token: string;
     id: string;
     name: string;
     userName: string;
     email: string;
     roleName: 'ADMINISTRATOR' | 'LEAD' | 'STAFF_IT_LEADER' | string;
+    token: string;
 }
 
 function getSession(): CurrentUser | null {
@@ -41,12 +40,10 @@ export default function PublicRoute({ children }: PublicRouteProps) {
             if (e.persisted) {
                 const session = getSession();
                 if (session && session.token) {
-                    const decoded: any = jwtDecode(session.token);
-                    const roleName = decoded.roleName;
                     // Force dynamic redirect if they magically got back to login via bfcache
-                    if (roleName === 'ADMINISTRATOR') window.location.replace('/dashboard-admin');
-                    else if (roleName === 'LEAD') window.location.replace('/dashboard-head');
-                    else if (roleName === 'EMPLOYEE') window.location.replace('/dashboard-staff');
+                    if (session.roleName === 'ADMINISTRATOR') window.location.replace('/dashboard-admin');
+                    else if (session.roleName === 'LEAD') window.location.replace('/dashboard-head');
+                    else if (session.roleName === 'EMPLOYEE') window.location.replace('/dashboard-admin');
                     else {
                         // Sesi rusak (tidak ada roleName), hapus otomatis dan kembali ke login
                         localStorage.removeItem('currentUser');
@@ -64,11 +61,9 @@ export default function PublicRoute({ children }: PublicRouteProps) {
 
     // If logged in, send them away to their respective dashboard
     if (session && session.token) {
-        const decoded: any = jwtDecode(session.token);
-        const roleName = decoded.roleName;
-        if (roleName === 'ADMINISTRATOR') return <Navigate to="/dashboard-admin" replace />;
-        if (roleName === 'LEAD') return <Navigate to="/dashboard-head" replace />;
-        if (roleName === 'EMPLOYEE') return <Navigate to="/dashboard-staff" replace />;
+        if (session.roleName === 'ADMINISTRATOR') return <Navigate to="/dashboard-admin" replace />;
+        if (session.roleName === 'LEAD') return <Navigate to="/dashboard-head" replace />;
+        if (session.roleName === 'EMPLOYEE') return <Navigate to="/dashboard-staff" replace />;
         // Jika sampai di sini, berarti sesi rusak/role tidak valid
         localStorage.removeItem('currentUser');
         localStorage.removeItem('token');

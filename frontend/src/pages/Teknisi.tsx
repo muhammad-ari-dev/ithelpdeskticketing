@@ -155,13 +155,13 @@ export default function Teknisi() {
                     <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-slate-600">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
-                    <div className="flex items-center gap-3" onClick={() => navigate('/login')}>
+                    <div className="flex items-center gap-3 bg-white hover:bg-blue-50/50 py-1.5 px-3 rounded-full border border-slate-200/80 cursor-pointer shadow-sm hover:shadow transition-all duration-300" onClick={() => navigate('/profile')}>
                         <div className="text-right hidden sm:block">
-                            <p className="text-xs font-black uppercase tracking-widest text-[#3B82F6]">Head IT</p>
-                            <p className="text-sm font-extrabold text-slate-800">{currentUser.username}</p>
+                            <p className="text-slate-800 font-extrabold text-xs leading-none">{currentUser.name || currentUser.username}</p>
+                            <p className="text-blue-500 text-[10px] font-bold mt-1">Head IT</p>
                         </div>
-                        <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shrink-0 shadow-md">
-                            <span className="text-[#3B82F6] font-black text-sm">{currentUser.username?.charAt(0)?.toUpperCase()}</span>
+                        <div className="w-8 h-8 rounded-full bg-blue-600/90 flex items-center justify-center shadow-inner text-white font-bold text-xs">
+                            {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : currentUser.username?.charAt(0)?.toUpperCase()}
                         </div>
                     </div>
                 </div>
@@ -188,13 +188,13 @@ export default function Teknisi() {
                         </div>
 
                         {/* User Profile */}
-                        <div className="flex items-center gap-4 cursor-pointer hover:opacity-85 transition-all" onClick={() => navigate('/login')}>
-                            <div className="text-right hidden sm:block">
-                                <h3 className="text-white font-black text-[17px] leading-tight tracking-wide">{currentUser.username}</h3>
-                                <p className="text-blue-100 font-bold text-[12px]">Head IT</p>
+                        <div className="hidden md:flex items-center gap-3 bg-white hover:bg-blue-50/50 py-1.5 px-3 rounded-full border border-slate-200/80 cursor-pointer shadow-sm hover:shadow transition-all duration-300" onClick={() => navigate('/profile')}>
+                            <div className="text-right">
+                                <p className="text-slate-800 font-extrabold text-xs leading-none">{currentUser.name || currentUser.username}</p>
+                                <p className="text-blue-500 text-[10px] font-bold mt-1">Head IT</p>
                             </div>
-                            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shadow-lg overflow-hidden border-2 border-white/80 font-black text-xl">
-                                {currentUser.username.charAt(0).toUpperCase()}
+                            <div className="w-8 h-8 rounded-full bg-blue-600/90 flex items-center justify-center shadow-inner text-white font-bold text-xs">
+                                {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : currentUser.username.charAt(0).toUpperCase()}
                             </div>
                         </div>
                     </div>
@@ -225,8 +225,8 @@ export default function Teknisi() {
                                 <div key={tech.id} className="relative bg-white/90 backdrop-blur-sm rounded-3xl p-6 pt-16 shadow-[0_15px_35px_rgba(15,23,42,0.04)] border border-slate-100 hover:shadow-[0_20px_45px_rgba(30,58,138,0.08)] transition-all duration-300 hover:-translate-y-1.5 group flex flex-col justify-between min-h-[220px]">
 
                                     {/* Foto Profil Melayang */}
-                                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-24 h-24 rounded-full border-[5px] border-white shadow-[0_10px_25px_rgba(15,23,42,0.08)] overflow-hidden bg-slate-100 z-10 transition-transform duration-500 group-hover:scale-105 group-hover:border-blue-50/50">
-                                        <img src={tech.avatar} alt={tech.name} className="w-full h-full object-cover" />
+                                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-24 h-24 rounded-full border-[5px] border-white shadow-[0_10px_25px_rgba(15,23,42,0.08)] bg-blue-100 flex items-center justify-center text-[40px] font-black text-blue-600 z-10 transition-transform duration-500 group-hover:scale-105 group-hover:border-blue-50/50">
+                                        {tech.name.charAt(0).toUpperCase()}
                                     </div>
                                     
                                     {/* Label Status Penugasan */}

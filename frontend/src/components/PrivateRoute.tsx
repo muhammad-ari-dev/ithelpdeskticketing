@@ -1,4 +1,3 @@
-import { jwtDecode } from 'jwt-decode';
 import { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
@@ -44,10 +43,7 @@ export default function PrivateRoute({ children, allowedRoles }: PrivateRoutePro
         return <Navigate to="/" state={{ from: location }} replace />;
     }
 
-    const decoded: any = jwtDecode(session.token);
-    const roleName = decoded.roleName;
-
-    if (allowedRoles && !allowedRoles.includes(roleName)) {
+    if (allowedRoles && !allowedRoles.includes(session.roleName)) {
         // Logged in but wrong role → redirect to login
         return <Navigate to="/" replace />;
     }

@@ -257,8 +257,8 @@ export default function LihatTiket() {
 
                                         {/* Kolom Profil Teknisi */}
                                         <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full border-2 border-white shadow-sm overflow-hidden bg-slate-200 shrink-0">
-                                                <img src={t.avatar} alt={t.tech} className="w-full h-full object-cover" />
+                                            <div className="w-8 h-8 rounded-full border-2 border-white shadow-sm bg-blue-100 flex items-center justify-center text-[12px] font-black text-blue-600 shrink-0">
+                                                {t.tech.charAt(0).toUpperCase()}
                                             </div>
                                             <span className="text-[13px] font-bold text-slate-600 truncate">{t.tech}</span>
                                         </div>

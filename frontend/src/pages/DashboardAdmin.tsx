@@ -67,7 +67,7 @@ export default function DashboardAdmin() {
 
     const handleSignOut = () => {
         localStorage.removeItem('currentUser');
-        navigate('/');
+        navigate('/login');
     };
 
     // Filter Data
@@ -176,16 +176,13 @@ export default function DashboardAdmin() {
                     <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-slate-600">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 bg-white hover:bg-blue-50/50 py-1.5 px-3 rounded-full border border-slate-200/80 cursor-pointer shadow-sm hover:shadow transition-all duration-300" onClick={() => navigate('/profile')}>
                         <div className="text-right hidden sm:block">
-                            <p className="text-xs font-black uppercase tracking-widest text-[#3B82F6]">Welcome Back</p>
-                            <p className="text-sm font-extrabold text-slate-800">{currentUser.username}</p>
+                            <p className="text-slate-800 font-extrabold text-xs leading-none">{currentUser.name || currentUser.username}</p>
+                            <p className="text-blue-500 text-[10px] font-bold mt-1">Administrator</p>
                         </div>
-                        <div 
-                            onClick={() => navigate('/profile')}
-                            className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center p-0.5 shadow-inner cursor-pointer hover:scale-105 transition-transform"
-                        >
-                            <img src={users.find(u => u.name === currentUser.username)?.avatar || 'https://i.pravatar.cc/150?img=68'} alt="User" className="w-full h-full rounded-full object-cover" />
+                        <div className="w-8 h-8 rounded-full bg-blue-600/90 flex items-center justify-center shadow-inner text-white font-bold text-xs">
+                            {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : "U"}
                         </div>
                     </div>
                 </div>
@@ -232,16 +229,13 @@ export default function DashboardAdmin() {
                             </button> */}
                         </div>
 
-                        <div className="hidden md:flex items-center gap-4 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-2xl border border-slate-200/60 shadow-sm">
+                        <div className="hidden md:flex items-center gap-3 bg-white hover:bg-blue-50/50 py-1.5 px-3 rounded-full border border-slate-200/80 cursor-pointer shadow-sm hover:shadow transition-all duration-300" onClick={() => navigate('/profile')}>
                             <div className="text-right">
-                                <p className="text-[11px] font-black uppercase tracking-widest text-blue-600">Welcome Back</p>
-                                <p className="text-[14px] font-extrabold text-slate-800">{currentUser.username}</p>
+                                <p className="text-slate-800 font-extrabold text-xs leading-none">{currentUser.name || currentUser.username}</p>
+                                <p className="text-blue-500 text-[10px] font-bold mt-1">Administrator</p>
                             </div>
-                            <div 
-                                onClick={() => navigate('/profile')}
-                                className="w-12 h-12 rounded-full border-2 border-white shadow-md overflow-hidden bg-white cursor-pointer hover:scale-105 transition-transform"
-                            >
-                                <img src={users.find(u => u.name === currentUser.username)?.avatar || 'https://i.pravatar.cc/150?img=68'} alt="User" className="w-full h-full rounded-full object-cover" />
+                            <div className="w-8 h-8 rounded-full bg-blue-600/90 flex items-center justify-center shadow-inner text-white font-bold text-xs">
+                                {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : "U"}
                             </div>
                         </div>
                     </div>
@@ -285,8 +279,8 @@ export default function DashboardAdmin() {
                                     className="bg-white/90 backdrop-blur-sm rounded-[28px] p-6 flex flex-col items-center text-center shadow-[0_8px_30px_rgba(59,130,246,0.04)] border border-slate-100/80 hover:border-blue-100 hover:shadow-[0_15px_40px_rgba(59,130,246,0.08)] hover:-translate-y-1 transition-all duration-300 relative z-10"
                                 >
                                     <div className="relative inline-block">
-                                        <div className="w-20 h-20 rounded-full shadow-sm overflow-hidden bg-white border-[3px] border-white ring-2 ring-slate-100">
-                                            <img src={user.avatar} alt={user.name} className={`w-full h-full object-cover transition-all ${user.status === 'Non Aktif' ? 'grayscale opacity-70' : ''}`} />
+                                        <div className={`w-20 h-20 rounded-full shadow-sm bg-blue-100 flex items-center justify-center text-[36px] font-black text-blue-600 border-[3px] border-white ring-2 ring-slate-100 transition-all ${user.status === 'Non Aktif' ? 'grayscale opacity-70' : ''}`}>
+                                            {user.name.charAt(0).toUpperCase()}
                                         </div>
                                         <div className={`absolute bottom-0.5 right-0.5 w-5 h-5 rounded-full border-2 border-white shadow-sm z-10 ${user.status === 'Aktif' ? 'bg-[#22c55e]' : 'bg-rose-500'}`} />
                                     </div>
@@ -450,12 +444,8 @@ export default function DashboardAdmin() {
                         <div className="px-8 pb-8 pt-0 relative bg-white">
                             {/* Avatar Section */}
                             <div className="absolute -top-16 left-8 flex items-end">
-                                <div className="w-[120px] h-[120px] rounded-full border-[6px] border-white shadow-xl overflow-hidden bg-white rotate-3 hover:rotate-0 transition-transform duration-300">
-                                    <img 
-                                        src={selectedUser.avatar} 
-                                        alt="Avatar" 
-                                        className={`w-full h-full object-cover -rotate-3 hover:rotate-0 transition-transform duration-300 ${selectedUser.status === 'Non Aktif' ? 'grayscale opacity-80' : ''}`} 
-                                    />
+                                <div className={`w-[120px] h-[120px] rounded-full border-[6px] border-white shadow-xl bg-blue-100 flex items-center justify-center text-[56px] font-black text-blue-600 rotate-3 hover:rotate-0 transition-transform duration-300 ${selectedUser.status === 'Non Aktif' ? 'grayscale opacity-80' : ''}`}>
+                                    {selectedUser.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div className={`absolute bottom-2 right-2 w-6 h-6 rounded-full border-[3px] border-white shadow-md z-10 ${selectedUser.status === 'Aktif' ? 'bg-[#22c55e]' : 'bg-rose-500'}`}></div>
                             </div>

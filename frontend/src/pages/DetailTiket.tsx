@@ -454,8 +454,8 @@ export default function DetailTiket() {
 
                             {/* Kiri: Avatar Teknisi */}
                             <div className="flex flex-col items-center shrink-0 w-[180px]">
-                                <div className="w-36 h-36 rounded-full border-4 border-slate-50 shadow-xl overflow-hidden bg-slate-200 mb-5 relative group">
-                                    <img src={ticketData.avatar} alt="Teknisi" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                <div className="w-36 h-36 rounded-full border-4 border-slate-50 shadow-xl bg-blue-100 flex items-center justify-center text-[64px] font-black text-blue-600 mb-5 relative group">
+                                    {ticketData.teknisi.charAt(0).toUpperCase()}
                                 </div>
                                 <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Teknisi Ditugaskan</p>
                                 <p className="text-[18px] font-black text-blue-900 text-center leading-tight">{ticketData.teknisi}</p>

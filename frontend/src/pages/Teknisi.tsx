@@ -97,8 +97,8 @@ export default function Teknisi() {
                 </div>
 
                 {/* Menu Navigasi */}
+                {/* Menu Navigasi */}
                 <div className="flex-1 py-6 flex flex-col gap-2.5 px-3.5 overflow-y-auto overflow-x-hidden">
-
                     {/* Menu: Dashboard */}
                     <div
                         onClick={() => { 
@@ -107,48 +107,117 @@ export default function Teknisi() {
                             else if (currentUser?.role === 'EMPLOYEE') navigate('/dashboard-staff');
                             else navigate('/dashboard-head');
                         }}
-                        className={`flex items-center gap-3.5 px-4 py-3 rounded-xl font-semibold cursor-pointer transition-all group
-                        ${activeMenu === 'dashboard' ? 'bg-white/20 text-white border-l-[3.5px] border-white font-bold hover:bg-white/25' : 'text-blue-100/80 hover:bg-white/10 hover:text-white'}`}
+                        className={`flex items-center gap-3.5 px-4 py-3 rounded-xl font-bold cursor-pointer transition-all group ${activeMenu === 'dashboard' ? 'bg-white/20 text-white border-l-[3.5px] border-white hover:bg-white/25' : 'text-blue-100/80 hover:bg-white/10 hover:text-white'}`}
                     >
-                        <svg className="w-5 h-5 shrink-0 group-hover:scale-105 transition-transform text-blue-200/80 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-                        <span className={`whitespace-nowrap text-[13px] tracking-wide uppercase transition-all duration-300 ${isSidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 hidden'}`}>DASHBOARD</span>
-                    </div>
-
-                    {/* Menu: Teknisi (AKTIF) */}
-                    <div
-                        onClick={() => { setActiveMenu('teknisi'); navigate('/teknisi'); }}
-                        className={`flex items-center gap-3.5 px-4 py-3 rounded-xl font-bold cursor-pointer transition-all group
-                        ${activeMenu === 'teknisi' ? 'bg-white/20 text-white border-l-[3.5px] border-white hover:bg-white/25' : 'text-blue-100/80 hover:bg-white/10 hover:text-white'}`}
-                    >
-                        <svg className="w-5 h-5 shrink-0 group-hover:scale-105 transition-transform text-blue-200/80 group-hover:text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                        <svg
+                            className={`w-5 h-5 shrink-0 group-hover:scale-105 transition-transform ${activeMenu === 'dashboard' ? 'text-white' : 'text-blue-200/80 group-hover:text-white'}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                            />
                         </svg>
-                        <span className={`whitespace-nowrap text-[13px] tracking-wide uppercase transition-all duration-300 ${isSidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 hidden'}`}>Teknisi</span>
+                        <span
+                            className={`whitespace-nowrap text-[13px] tracking-wide uppercase transition-all duration-300 ${isSidebarOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 hidden"}`}
+                        >
+                            DASHBOARD
+                        </span>
                     </div>
 
                     {/* Menu Lainnya */}
                     {[
-                        { id: 'buat-tiket', icon: 'M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', text: 'Buat Tiket', path: '/buat-tiket' },
-                        { id: 'detail-tiket', icon: 'M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v11m0 5l4-4-4-4', text: 'Detail Tiket', path: '/ticket-detail' },
-                        { id: 'lihat-tiket', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', text: 'Lihat Tiket', path: '#' },
-                    ].map((item) => (
+                        {
+                            id: 'profile',
+                            icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
+                            text: "Profile",
+                            path: "/profile",
+                        },
+                        {
+                            id: 'teknisi',
+                            icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z",
+                            text: "Teknisi",
+                            path: "/teknisi",
+                        },
+                        {
+                            id: 'buat-tiket',
+                            icon: "M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
+                            text: "Buat Tiket",
+                            path: "/buat-tiket",
+                        },
+                        {
+                            id: 'detail-tiket',
+                            icon: "M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v11m0 5l4-4-4-4",
+                            text: "Detail Tiket",
+                            path: "/ticket-detail",
+                        },
+                        {
+                            id: 'lihat-tiket',
+                            icon: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10",
+                            text: "Lihat Tiket",
+                            path: "/lihat-tiket",
+                        },
+                    ].map((item, idx) => (
                         <div
-                            key={item.id}
+                            key={idx}
                             onClick={() => {
                                 setActiveMenu(item.id);
-                                if(item.path !== '#') navigate(item.path);
+                                navigate(item.path);
                             }}
-                            className={`flex items-center gap-3.5 px-4 py-3 rounded-xl font-semibold cursor-pointer transition-all group
-                            ${activeMenu === item.id ? 'bg-white/20 text-white border-l-[3.5px] border-white font-bold hover:bg-white/25' : 'text-blue-100/80 hover:bg-white/10 hover:text-white'}`}
+                            className={`flex items-center gap-3.5 px-4 py-3 rounded-xl font-semibold cursor-pointer transition-all group ${activeMenu === item.id ? 'bg-white/20 text-white border-l-[3.5px] border-white font-bold hover:bg-white/25' : 'text-blue-100/80 hover:bg-white/10 hover:text-white'}`}
                         >
-                            <svg className="w-5 h-5 shrink-0 group-hover:scale-105 transition-transform text-slate-500 group-hover:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={item.icon} />
+                            <svg
+                                className={`w-5 h-5 shrink-0 group-hover:scale-105 transition-transform ${activeMenu === item.id ? 'text-white' : 'text-blue-200/80 group-hover:text-white'}`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d={item.icon}
+                                />
                             </svg>
-                            <span className={`whitespace-nowrap text-[13px] tracking-wide transition-all duration-300 ${isSidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 hidden'}`}>
+                            <span
+                                className={`whitespace-nowrap text-[13px] tracking-wide transition-all duration-300 ${isSidebarOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 hidden"}`}
+                            >
                                 {item.text}
                             </span>
                         </div>
                     ))}
+
+                    {/* Sign Out Button in Sidebar */}
+                    <div
+                        onClick={() => {
+                            localStorage.removeItem("currentUser");
+                            navigate("/login");
+                        }}
+                        className="mt-auto flex items-center gap-3.5 text-blue-100/80 px-4 py-3 rounded-xl font-semibold cursor-pointer transition-all hover:bg-red-500/20 hover:text-red-100 group"
+                    >
+                        <svg
+                            className="w-5 h-5 shrink-0 group-hover:scale-105 transition-transform"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2.5"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                            />
+                        </svg>
+                        <span
+                            className={`whitespace-nowrap text-[13px] tracking-wide transition-all duration-300 ${isSidebarOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 hidden"}`}
+                        >
+                            SIGN OUT
+                        </span>
+                    </div>
                 </div>
             </div>
 

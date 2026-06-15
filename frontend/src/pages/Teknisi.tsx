@@ -101,7 +101,12 @@ export default function Teknisi() {
 
                     {/* Menu: Dashboard */}
                     <div
-                        onClick={() => { setActiveMenu('dashboard'); navigate('/dashboard'); }}
+                        onClick={() => { 
+                            setActiveMenu('dashboard'); 
+                            if (currentUser?.role === 'ADMINISTRATOR') navigate('/dashboard-admin');
+                            else if (currentUser?.role === 'EMPLOYEE') navigate('/dashboard-staff');
+                            else navigate('/dashboard-head');
+                        }}
                         className={`flex items-center gap-3.5 px-4 py-3 rounded-xl font-semibold cursor-pointer transition-all group
                         ${activeMenu === 'dashboard' ? 'bg-white/20 text-white border-l-[3.5px] border-white font-bold hover:bg-white/25' : 'text-blue-100/80 hover:bg-white/10 hover:text-white'}`}
                     >

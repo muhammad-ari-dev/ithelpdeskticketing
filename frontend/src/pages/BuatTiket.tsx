@@ -104,6 +104,13 @@ export default function BuatTiket() {
         setJatuhTempo(getInitialDateTime());
     };
 
+    const handleHome = () => {
+        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        if (user.role === 'ADMINISTRATOR') navigate('/dashboard-admin');
+        else if (user.role === 'EMPLOYEE') navigate('/dashboard-staff');
+        else navigate('/dashboard-head');
+    };
+
     return (
         <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4 font-sans relative overflow-hidden">
 
@@ -155,7 +162,7 @@ export default function BuatTiket() {
                     <button onClick={() => navigate('/ticket-detail')} className="text-blue-100 hover:text-white font-bold text-[14px] md:text-[15px] transition-all hover:scale-105 duration-200">Detail Tiket</button>
                     <button onClick={() => navigate('/lihat-tiket')} className="text-blue-100 hover:text-white font-bold text-[14px] md:text-[15px] transition-all hover:scale-105 duration-200">Lihat Tiket</button>
                 </div>
-                <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 px-5 py-2 rounded-full text-white font-bold text-[12px] uppercase transition-all tracking-wider shrink-0">
+                <button onClick={handleHome} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 px-5 py-2 rounded-full text-white font-bold text-[12px] uppercase transition-all tracking-wider shrink-0">
                     <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>
                     Home
                 </button>

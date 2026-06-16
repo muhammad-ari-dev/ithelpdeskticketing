@@ -117,6 +117,7 @@ public class EmployeeController {
      *   → Employee tidak bisa login lagi
      */
     @PatchMapping("/disable")
+    @SecurityRequirement(name = "helpdesk-api")
     public ResponseEntity<?> disableUser(@Valid @RequestBody DisableUserDTO dto) {
         try {
             String result = employeeService.disableUser(dto);
@@ -149,6 +150,7 @@ public class EmployeeController {
      *   → Status kembali ACTIVE
      */
     @PatchMapping("/reset-password")
+    @SecurityRequirement(name = "helpdesk-api")
     public ResponseEntity<?> resetPassUser(@Valid @RequestBody DisableUserDTO dto) {
         try {
             String result = employeeService.resetPassUser(dto);

@@ -375,6 +375,8 @@ public class EmployeeService {
         String magicToken = UUID.randomUUID().toString();
         employee.setMagicToken(magicToken);
 
+        employee.setMagicTokenExpiryAt(LocalDateTime.now().plusDays(1));
+
         /**
          * Ubah status ke PENDING
          *
@@ -394,4 +396,3 @@ public class EmployeeService {
         return ConstantMessage.SUCCESS_RESET_PASS + ": " + employee.getEmail();
     }
 }
-

@@ -12,6 +12,11 @@ export const authApi = {
     return response.data;
   },
 
+  getEmployees: async () => {
+    const response = await axiosClient.get("/api/employee/employees");
+    return response.data;
+  },
+
   // 2. REGISTRASI (Tambah Karyawan)
   registerEmployee: async (data: {
     employeeName: string;

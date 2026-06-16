@@ -1,7 +1,59 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LogoImg from '../assets/logolandscape.png';
-import { useUserContext } from '../context/UserContext';
+import { useUserContext, type User } from '../context/UserContext';
+import { authApi } from '../api/authApi';
+
+interface BackendEmployee {
+    id?: string;
+    employeeName?: string;
+    userName?: string;
+    email?: string;
+    noHp?: string;
+    roleName?: string;
+    roleDesc?: string;
+    accountStatus?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    leaderName?: string;
+    leadID?: string;
+}
+
+const normalizeRoleName = (roleName?: string): User['roleName'] => {
+    const normalized = roleName?.toUpperCase();
+    if (normalized === 'LEAD') return 'Head IT';
+    if (normalized === 'ADMINISTRATOR' || normalized === 'ADMIN') return 'ADMIN';
+    return 'Staff IT';
+};
+
+const normalizeStatus = (accountStatus?: string, updatedAt?: string): User['status'] => {
+    if (accountStatus?.toUpperCase() === 'INACTIVE' || updatedAt) return 'Non Aktif';
+    return 'Aktif';
+};
+
+const mapEmployeeToUser = (employee: BackendEmployee, index: number): User & { leaderName?: string } => {
+    const roleName = normalizeRoleName(employee.roleName);
+    const status = normalizeStatus(employee.accountStatus, employee.updatedAt);
+
+    return {
+        id: employee.id || employee.userName || `employee-${index}`,
+        name: employee.employeeName || '-',
+        username: employee.userName || '-',
+        email: employee.email || '-',
+        phone: employee.noHp || '-',
+        roleName,
+        roleDesc: employee.roleDesc || employee.roleName || roleName,
+        staffIds: [],
+        leaderId: employee.leadID || null,
+        joinDate: employee.createdAt || '-',
+        inactiveDate: employee.updatedAt,
+        status,
+        avatar: `https://i.pravatar.cc/150?u=${encodeURIComponent(employee.userName || employee.employeeName || String(index))}`,
+        password: '',
+        points: 0,
+        leaderName: employee.leaderName,
+    };
+};
 
 // ============================================================
 // KOMPONEN GELOMBANG BIRU
@@ -22,15 +74,19 @@ const BlueWave = () => (
 
 export default function DashboardAdmin() {
     const navigate = useNavigate();
-    const { users, updateUserStatus, removeUser, updateUser, getHeads, getStaffs } = useUserContext();
+    const { users: contextUsers, updateUserStatus, removeUser, updateUser, getHeads, getStaffs } = useUserContext();
+    const contextUsersRef = useRef(contextUsers);
 
     // ================= STATE =================
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('All Role');
     const [activeMenu, setActiveMenu] = useState('dashboard');
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
-    const [selectedUser, setSelectedUser] = useState<any>(null);
-    const [deleteConfirmUser, setDeleteConfirmUser] = useState<any>(null);
+    const [users, setUsers] = useState<(User & { leaderName?: string })[]>([]);
+    const [isLoadingEmployees, setIsLoadingEmployees] = useState(true);
+    const [employeeLoadError, setEmployeeLoadError] = useState<string | null>(null);
+    const [selectedUser, setSelectedUser] = useState<(User & { leaderName?: string }) | null>(null);
+    const [deleteConfirmUser, setDeleteConfirmUser] = useState<(User & { leaderName?: string }) | null>(null);
     const [alertMessage, setAlertMessage] = useState<string | null>(null);
     
     // Pagination State
@@ -38,7 +94,7 @@ export default function DashboardAdmin() {
     const itemsPerPage = 9;
     
     // Edit State
-    const [editUser, setEditUser] = useState<any>(null);
+    const [editUser, setEditUser] = useState<User | null>(null);
     const [editFormData, setEditFormData] = useState<{name: string, username: string, email: string, phone: string, leaderId?: string | null, staffIds?: string[]}>({ name: '', username: '', email: '', phone: '', leaderId: null, staffIds: [] });
 
     // Session dari localStorage
@@ -46,7 +102,28 @@ export default function DashboardAdmin() {
     const currentUser = sessionRaw ? JSON.parse(sessionRaw) : { id: 'admin', username: 'Admin Master', roleName: 'ADMINISTRATOR' };
     
     // ================= FUNGSI =================
-    const openEditModal = (user: any) => {
+    useEffect(() => {
+        const loadEmployees = async () => {
+            setIsLoadingEmployees(true);
+            setEmployeeLoadError(null);
+
+            try {
+                const response = await authApi.getEmployees();
+                const employeeList = Array.isArray(response) ? response : response?.data ?? [];
+                setUsers(employeeList.map(mapEmployeeToUser));
+            } catch (error) {
+                console.error('[getEmployees] error:', error);
+                setEmployeeLoadError('Gagal memuat data karyawan dari backend.');
+                setUsers(contextUsersRef.current);
+            } finally {
+                setIsLoadingEmployees(false);
+            }
+        };
+
+        loadEmployees();
+    }, []);
+
+    const openEditModal = (user: User) => {
         setEditFormData({
             name: user.name,
             username: user.username,
@@ -56,6 +133,19 @@ export default function DashboardAdmin() {
             staffIds: user.staffIds || []
         });
         setEditUser(user);
+    };
+
+    const handleUpdateUserStatus = (user: User) => {
+        const newStatus = user.status === 'Aktif' ? 'Non Aktif' : 'Aktif';
+        updateUserStatus(user.id, newStatus);
+        setUsers(prev => prev.map(item => String(item.id) === String(user.id) ? { ...item, status: newStatus } : item));
+        setSelectedUser(prev => prev && String(prev.id) === String(user.id) ? { ...prev, status: newStatus } : prev);
+    };
+
+    const handleRemoveUser = (user: User) => {
+        removeUser(user.id);
+        setUsers(prev => prev.filter(item => String(item.id) !== String(user.id)));
+        setDeleteConfirmUser(null);
     };
 
     const handleSaveEdit = (e: React.FormEvent) => {
@@ -76,10 +166,6 @@ export default function DashboardAdmin() {
         const matchesRole = roleFilter === 'All Role' || user.roleName === roleFilter;
         return matchesSearch && matchesRole;
     });
-
-    React.useEffect(() => {
-        setCurrentPage(1);
-    }, [searchTerm, roleFilter]);
 
     const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
     const paginatedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -201,7 +287,10 @@ export default function DashboardAdmin() {
                                     type="text"
                                     placeholder="Cari nama karyawan..."
                                     value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onChange={(e) => {
+                                        setSearchTerm(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
                                     className="bg-transparent border-none outline-none text-sm font-semibold text-slate-700 w-full placeholder-slate-400"
                                 />
                             </div>
@@ -209,7 +298,10 @@ export default function DashboardAdmin() {
                             <div className="relative">
                                 <select
                                     value={roleFilter}
-                                    onChange={(e) => setRoleFilter(e.target.value)}
+                                    onChange={(e) => {
+                                        setRoleFilter(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
                                     className="bg-slate-50 border border-slate-200/80 rounded-full px-5 py-2.5 text-sm font-bold text-slate-600 appearance-none cursor-pointer pr-9 outline-none focus:border-blue-400 focus:bg-white transition-all shadow-sm"
                                 >
                                     <option>All Role</option>
@@ -270,7 +362,18 @@ export default function DashboardAdmin() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-8 pt-4 pb-8 relative z-10">
-                    {filteredUsers.length === 0 ? (
+                    {employeeLoadError && (
+                        <div className="mb-4 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl px-5 py-3 text-sm font-bold">
+                            {employeeLoadError}
+                        </div>
+                    )}
+
+                    {isLoadingEmployees ? (
+                        <div className="bg-white/70 rounded-3xl border border-slate-100 p-16 flex flex-col items-center text-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500 border-opacity-50 mb-4"></div>
+                            <p className="text-slate-400 font-bold text-sm">Memuat data karyawan...</p>
+                        </div>
+                    ) : filteredUsers.length === 0 ? (
                         <div className="bg-white/70 rounded-3xl border border-slate-100 p-16 flex flex-col items-center text-center">
                             <svg className="w-12 h-12 text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -311,7 +414,7 @@ export default function DashboardAdmin() {
                                         ) : user.roleName === 'Staff IT' && (
                                             <div className="flex justify-between items-center border-t border-slate-200/50 pt-2">
                                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Leader</p>
-                                                <p className="text-[11px] font-bold text-slate-600 truncate max-w-[100px]">{user.leaderId ? users.find(u => String(u.id) === String(user.leaderId))?.name || 'Terhubung' : '—'}</p>
+                                                <p className="text-[11px] font-bold text-slate-600 truncate max-w-[100px]">{user.leaderName || (user.leaderId ? users.find(u => String(u.id) === String(user.leaderId))?.name || 'Terhubung' : '-')}</p>
                                             </div>
                                         )}
                                     </div>
@@ -337,12 +440,11 @@ export default function DashboardAdmin() {
                                             </svg>
                                         </button>
 
-                                        <button
+                                        {/* <button
                                             type="button"
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                const newStatus = user.status === 'Aktif' ? 'Non Aktif' : 'Aktif';
-                                                updateUserStatus(user.id, newStatus);
+                                                handleUpdateUserStatus(user);
                                             }}
                                             className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-[11px] font-bold text-white shadow-sm transition-all active:scale-95 cursor-pointer ${user.status === 'Aktif' ? 'bg-[#3B82F6] hover:bg-[#2563EB]' : 'bg-rose-500 hover:bg-rose-600'}`}
                                             title={user.status === 'Aktif' ? 'Klik untuk Non Aktifkan' : 'Klik untuk Aktifkan'}
@@ -351,7 +453,7 @@ export default function DashboardAdmin() {
                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                                             </svg>
-                                        </button>
+                                        </button> */}
 
                                         {user.status === 'Non Aktif' && (
                                             <button
@@ -372,6 +474,20 @@ export default function DashboardAdmin() {
                                                 </svg>
                                             </button>
                                         )}
+                                    </div>
+                                    <div className="mt-5 flex items-center justify-center gap-2 w-full">
+                                        <button
+                                            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-[11px] font-bold text-white shadow-sm transition-all active:scale-95 cursor-pointer bg-[#3B82F6] hover:bg-[#2563EB]`}
+                                            title={'Reset Password'}
+                                        >
+                                            Reset Password
+                                        </button>
+                                        <button
+                                            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-[11px] font-bold text-white shadow-sm transition-all active:scale-95 cursor-pointer bg-rose-500 hover:bg-rose-600`}
+                                            title={'Non Aktifkan'}
+                                        >
+                                            Non Aktifkan
+                                        </button>
                                     </div>
                                 </div>
                             ))}
@@ -466,13 +582,13 @@ export default function DashboardAdmin() {
                                 <p className="text-sm font-bold text-blue-500 mt-1.5">@{selectedUser.username}</p>
 
                                 <div className="flex flex-wrap gap-2.5 mt-5">
-                                    <span className={`px-4 py-1.5 rounded-xl text-[11px] font-black tracking-widest uppercase border shadow-sm ${selectedUser.role === 'Head IT' ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
-                                        {selectedUser.role}
+                                    <span className={`px-4 py-1.5 rounded-xl text-[11px] font-black tracking-widest uppercase border shadow-sm ${selectedUser.roleName === 'Head IT' ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
+                                        {selectedUser.roleName}
                                     </span>
-                                    {selectedUser.role === 'Staff IT' && selectedUser.leaderId && (
+                                    {selectedUser.roleName === 'Staff IT' && (selectedUser.leaderName || selectedUser.leaderId) && (
                                         <span className="px-4 py-1.5 bg-blue-50 text-blue-600 rounded-xl text-[11px] font-black tracking-widest uppercase border border-blue-100 flex items-center gap-1.5 shadow-sm">
                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                                            Leader: {users.find(u => String(u.id) === String(selectedUser.leaderId))?.name || 'Terhubung'}
+                                            Leader: {selectedUser.leaderName || users.find(u => String(u.id) === String(selectedUser.leaderId))?.name || 'Terhubung'}
                                         </span>
                                     )}
                                 </div>
@@ -554,8 +670,7 @@ export default function DashboardAdmin() {
                             <button
                                 type="button"
                                 onClick={() => {
-                                    removeUser(deleteConfirmUser.id);
-                                    setDeleteConfirmUser(null);
+                                    handleRemoveUser(deleteConfirmUser);
                                 }}
                                 className="flex-1 py-2.5 rounded-full bg-rose-500 hover:bg-rose-600 text-white font-bold transition-all shadow-md shadow-rose-200 text-sm"
                             >
@@ -655,7 +770,7 @@ export default function DashboardAdmin() {
                             </div>
 
                             {/* Pilihan Leader (Khusus Staff IT) */}
-                            {editUser.role === 'Staff IT' && (
+                            {/* {editUser.roleName === 'Staff IT' && (
                                 <div>
                                     <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Pilih Leader (Head IT)</label>
                                     <select
@@ -669,10 +784,10 @@ export default function DashboardAdmin() {
                                         ))}
                                     </select>
                                 </div>
-                            )}
+                            )} */}
 
                             {/* Pilihan Staffs (Khusus Head IT) */}
-                            {editUser.role === 'Head IT' && (
+                            {editUser.roleName === 'Head IT' && (
                                 <div>
                                     <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Pilih Staff IT (Bawahan)</label>
                                     <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 max-h-40 overflow-y-auto space-y-2.5">

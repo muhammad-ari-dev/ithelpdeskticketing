@@ -60,23 +60,24 @@ public class EmployeeService {
         List<EmployeesResponseDTO> dtoList = employees.stream().map(employee -> {
             EmployeesResponseDTO dto = modelMapper.map(employee, EmployeesResponseDTO.class);
 
+            dto.setStatus(employee.getAccountStatus());
+            dto.setCreatedAt(employee.getCreatedAt().format(formatter));
+
+            // Format Updated Date conditionally
+            if ("INACTIVE".equals(employee.getAccountStatus()) && employee.getUpdatedAt() != null) {
+                dto.setUpdatedAt(employee.getUpdatedAt().format(formatter));
+            } else {
+                dto.setUpdatedAt(null);
+            }
+
             // Map Role Name safely
             if (employee.getRole() != null) {
                 dto.setRoleName(employee.getRole().getRoleName());
             }
 
-            // Format Created Date safely
-            if (employee.getCreatedAt() != null) {
-                dto.setCreatedAt(employee.getCreatedAt().format(formatter));
-            }
-
-            // Format Updated Date conditionally
-            if ("INACTIVE".equals(employee.getAccountStatus()) && employee.getUpdatedAt() != null) {
-                dto.setUpdatedAt(employee.getUpdatedAt().format(formatter));
-            }
-
             // Map Leader Name safely (Handles null leads)
             if (employee.getLead() != null) {
+                dto.setLeadID(employee.getLead().getId().toString());
                 dto.setLeaderName(employee.getLead().getEmployeeName());
             }
 

@@ -43,12 +43,9 @@ public class AuthController {
     }
 
     @PostMapping("/set-password")
-    public ResponseEntity<?> setPassword(@Valid @RequestBody SetPasswordDTO dto) {
-        try {
-            String result = authService.setPassword(dto);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Object> setPassword(
+            @Valid @RequestBody SetPasswordDTO setPasswordDTO,
+            HttpServletRequest request) {
+        return authService.setPassword(setPasswordDTO, request);
     }
 }

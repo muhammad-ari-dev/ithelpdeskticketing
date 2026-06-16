@@ -7,6 +7,11 @@ export const authApi = {
     return response.data;
   },
 
+  getProfile: async () => {
+    const response = await axiosClient.get("/api/employee/profile"); 
+    return response.data;
+  },
+
   // 2. REGISTRASI (Tambah Karyawan)
   registerEmployee: async (data: {
     employeeName: string;
@@ -16,13 +21,13 @@ export const authApi = {
     roleName: string;
     leadID?: string | null;
   }) => {
-    const response = await axiosClient.post("/api/auth/register", data);
+    const response = await axiosClient.post("/api/employee/register", data);
     return response.data;
   },
 
   // 3. AMBIL DAFTAR LEAD (Untuk Dropdown di TambahUser)
   getLeads: async () => {
-    const response = await axiosClient.get("/api/auth/leads");
+    const response = await axiosClient.get("/api/employee/leads");
     return response.data;
   },
 
@@ -33,6 +38,16 @@ export const authApi = {
     confirmPassword: string;
   }) => {
     const response = await axiosClient.post("/api/auth/set-password", data);
+    return response.data;
+  },
+
+  // 5. CHANGE PASSWORD (Ganti Password sendiri)
+  changePassword: async (data: {
+    oldPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => {
+    const response = await axiosClient.patch("/api/employee/change-password", data);
     return response.data;
   },
 };

@@ -1,6 +1,5 @@
 package com.juaracoding.ITHelpdeskTicketing.dto.response;
 
-import com.juaracoding.ITHelpdeskTicketing.model.Employee;
 import lombok.Data;
 import java.util.UUID;
 
@@ -12,10 +11,10 @@ public class LeadResponseDTO {
     private String email;
 
     // Constructor dari Employee entity
-    public LeadResponseDTO(Employee employee) {
-        this.id = employee.getId();
-        this.employeeName = employee.getEmployeeName();
-        this.userName = employee.getUserName();
-        this.email = employee.getEmail();
-    }
+//    public LeadResponseDTO(Employee employee) {
+//        this.id = employee.getId();
+//        this.employeeName = employee.getEmployeeName();
+//        this.userName = employee.getUserName();
+//        this.email = employee.getEmail();
+//    }
 }

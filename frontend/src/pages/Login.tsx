@@ -70,12 +70,50 @@ export default function Login() {
         navigate(targetRoute);
       }, 2800);
     } catch (error: unknown) {
-      // Jika terjadi error (baik dari backend maupun server mati)
-      // Tampilkan pop up "Username dan Password salah" dan merahkan kedua field
-      setErrorMessage("Username dan Password salah");
-      setShowErrorPopup(true);
-      setUsernameError("Username dan Password salah");
-      setPasswordError("Username dan Password salah");
+      const err = error as { response?: { data?: any } };
+      let errorMsg = "";
+      
+      if (err.response?.data) {
+        if (typeof err.response.data === "string") {
+          errorMsg = err.response.data;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      }
+
+      if (!errorMsg || errorMsg.trim() === "") {
+        // Jika backend tidak mengirim alasan spesifik (misal server down/CORS)
+        setPasswordError("password tidak sesuai dengan username");
+        return;
+      }
+
+      const lowerMsg = String(errorMsg).toLowerCase();
+      
+      // 1. Cek apabila error berhubungan dengan kata sandi/kredensial
+      if (
+        lowerMsg.includes("password") || 
+        lowerMsg.includes("sandi") || 
+        lowerMsg.includes("kredensial") || 
+        lowerMsg.includes("credential") ||
+        lowerMsg.includes("bad") ||
+        lowerMsg.includes("salah")
+      ) {
+        setPasswordError("password tidak sesuai dengan username");
+      } 
+      // 2. Cek apabila error berhubungan dengan ketiadaan user
+      else if (
+        lowerMsg.includes("username") || 
+        lowerMsg.includes("user") || 
+        lowerMsg.includes("pengguna") ||
+        lowerMsg.includes("ditemukan") ||
+        lowerMsg.includes("found")
+      ) {
+        setUsernameError("username tidak sesuai dengan password");
+      } 
+      // 3. Fallback jika response dari backend tidak terdeteksi kata kuncinya
+      else {
+        setPasswordError("password tidak sesuai dengan username");
+      }
     }
   }; // <== TAMBAHIN INI CUY! WAJIB BANGET BIAR FUNGSINYA SELESAI
 
@@ -367,13 +405,10 @@ export default function Login() {
 
             {/* ================= FOOTER ================= */}
             <div
-              className="mt-8 pt-5 border-t border-slate-100 opacity-0 animate-slide-up-fade"
+              className="mt-4 border-t border-slate-100 opacity-0 animate-slide-up-fade"
               style={{ animationDelay: "0.6s" }}
             >
-              <div className="flex justify-between items-center">
-                <button className="text-left text-[13px] font-semibold text-slate-400 hover:text-blue-600 transition-colors duration-300">
-                  Lupa sandi?
-                </button>
+              <div className="flex justify-end items-center">
                 <div className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></div>
                   <span className="text-[11px] font-bold text-slate-400">

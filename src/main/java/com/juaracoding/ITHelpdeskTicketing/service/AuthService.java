@@ -25,6 +25,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -128,9 +129,9 @@ public class AuthService implements UserDetailsService {
         String token = jwtUtility.doGenerateToken(claims, employeeDb.getUserName());
 
         // Enkripsi token jika fitur enkripsi aktif di jwt.properties (token.enable.encrypt=y)
-        if (JwtConfig.getTokenEncryptEnable().equals("y")) {
-            token = CryptoJwt.performEncrypt(token);
-        }
+//        if (JwtConfig.getTokenEncryptEnable().equals("y")) {
+//            token = CryptoJwt.performEncrypt(token);
+//        }
 
         /**
          * BUAT RESPONSE DENGAN LoginResponseDTO
@@ -153,20 +154,32 @@ public class AuthService implements UserDetailsService {
     // FITUR 2: SET PASSWORD (oleh Employee via Magic Link)
     // =========================================================
     @Transactional
-    public String setPassword(SetPasswordDTO dto) {
-        if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
-            throw new RuntimeException("Password baru dan konfirmasi tidak cocok!");
+    public ResponseEntity<Object> setPassword(SetPasswordDTO setPasswordDTO, HttpServletRequest request) {
+
+        if (!setPasswordDTO.getNewPassword().equals(setPasswordDTO.getConfirmPassword())) {
+            throw new RuntimeException(ConstantMessage.PWD_ERROR);
         }
 
-        Employee employee = employeeRepo.findByMagicToken(dto.getMagicToken())
-                .orElseThrow(() -> new RuntimeException("Token tidak valid atau sudah kedaluwarsa!"));
+        Optional<Employee> optionalEmployee = employeeRepo.findByMagicToken(setPasswordDTO.getMagicToken());
+        if(optionalEmployee.isEmpty()){
+            throw new RuntimeException(ConstantMessage.TOKEN_ERROR);
+        }
+        Employee employee = optionalEmployee.get();
 
-        employee.setPassword(BcryptImpl.hash(employee.getUserName() + dto.getNewPassword()));
+        if (LocalDateTime.now().isAfter(employee.getMagicTokenExpiryAt())) {
+            throw new RuntimeException(ConstantMessage.TOKEN_ERROR);
+        }
+
+        employee.setPassword(BcryptImpl.hash(employee.getUserName() + setPasswordDTO.getNewPassword()));
         employee.setAccountStatus("ACTIVE");
         employee.setMagicToken(null);
+        employee.setMagicTokenExpiryAt(null);
         employeeRepo.save(employee);
 
-        return "Password berhasil diset! Akun sekarang sudah aktif. Silakan login.";
+        return new ResponseHandler()
+                .handleResponse(ConstantMessage.SUCCESS_SAVE, HttpStatus.OK, null, request);
+
+       // return "Password berhasil diset! Akun sekarang sudah aktif. Silakan login.";
     }
 
     // =========================================================

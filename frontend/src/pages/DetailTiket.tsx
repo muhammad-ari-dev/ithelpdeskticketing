@@ -187,13 +187,6 @@ export default function DetailTiket() {
         navigate('/lihat-tiket');
     };
 
-    const handleHome = () => {
-        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        if (user.role === 'ADMINISTRATOR') navigate('/dashboard-admin');
-        else if (user.role === 'EMPLOYEE') navigate('/dashboard-staff');
-        else navigate('/dashboard-head');
-    };
-
     const updateTicketStatus = (newStatus: string) => {
         if (!ticketData.id) return;
         let updateFields: any = { status: newStatus };
@@ -310,7 +303,7 @@ export default function DetailTiket() {
                             <button onClick={() => navigate('/lihat-tiket')} className="text-white hover:text-blue-200 font-bold text-[14px] md:text-[15px] transition-colors">Lihat Tiket</button>
                         )}
                     </div>
-                    <button onClick={handleHome} className="flex items-center gap-2 bg-blue-800/40 hover:bg-blue-800/80 px-4 py-1.5 rounded-full transition-colors border-2 border-blue-900/50">
+                    <button onClick={() => navigate(currentUser?.role === 'STAFF_IT_LEADER' ? '/dashboard-staff' : '/dashboard')} className="flex items-center gap-2 bg-blue-800/40 hover:bg-blue-800/80 px-4 py-1.5 rounded-full transition-colors border-2 border-blue-900/50">
                         <div className="bg-white rounded-full p-0.5">
                             <svg className="w-3.5 h-3.5 text-blue-900" fill="currentColor" viewBox="0 0 24 24"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>
                         </div>
@@ -461,8 +454,8 @@ export default function DetailTiket() {
 
                             {/* Kiri: Avatar Teknisi */}
                             <div className="flex flex-col items-center shrink-0 w-[180px]">
-                                <div className="w-36 h-36 rounded-full border-4 border-slate-50 shadow-xl bg-blue-100 flex items-center justify-center text-[64px] font-black text-blue-600 mb-5 relative group">
-                                    {ticketData.teknisi.charAt(0).toUpperCase()}
+                                <div className="w-36 h-36 rounded-full border-4 border-slate-50 shadow-xl overflow-hidden bg-slate-200 mb-5 relative group">
+                                    <img src={ticketData.avatar} alt="Teknisi" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                 </div>
                                 <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Teknisi Ditugaskan</p>
                                 <p className="text-[18px] font-black text-blue-900 text-center leading-tight">{ticketData.teknisi}</p>

@@ -27,10 +27,9 @@ const BlueWave = () => (
 // ============================================================
 export default function TambahUser() {
   const navigate = useNavigate();
-  const { addUser, getHeads, getStaffs } = useUserContext();
+  const { getStaffs } = useUserContext();
 
   // Ambil data dari context
-  const availableLeaders = getHeads();
   const availableStaffs = getStaffs();
 
   // ===== STATE FORM =====
@@ -77,7 +76,7 @@ export default function TambahUser() {
 
   const handleSignOut = () => {
     localStorage.removeItem("currentUser");
-    navigate("/login");
+    navigate("/");
   };
 
   // ===== HANDLERS =====
@@ -134,6 +133,13 @@ export default function TambahUser() {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(formData.email)) {
       setErrorMessage("Alamat email tidak valid. Pastikan format domain komplit (misal: .com, bukan .c).");
+      setShowErrorPopup(true);
+      return;
+    }
+
+    // Validasi Leader jika role Staff IT
+    if (formData.role === "Staff IT" && !selectedLeaderId) {
+      setErrorMessage("Silakan pilih Leader terlebih dahulu.");
       setShowErrorPopup(true);
       return;
     }
@@ -328,17 +334,19 @@ export default function TambahUser() {
               />
             </svg>
           </button>
-          <div className="flex items-center gap-3 bg-white hover:bg-blue-50/50 py-1.5 px-3 rounded-full border border-slate-200/80 cursor-pointer shadow-sm hover:shadow transition-all duration-300" onClick={() => navigate('/profile')}>
+          <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
-              <p className="text-slate-800 font-extrabold text-xs leading-none">
-                {sessionUser.name || sessionUser.username}
+              <p className="text-xs font-black uppercase tracking-widest text-[#3B82F6]">
+                Welcome Back
               </p>
-              <p className="text-blue-500 text-[10px] font-bold mt-1">
-                Administrator
+              <p className="text-sm font-extrabold text-slate-800">
+                {sessionUser.username}
               </p>
             </div>
-            <div className="w-8 h-8 rounded-full bg-blue-600/90 flex items-center justify-center shadow-inner text-white font-bold text-xs">
-              {sessionUser.name ? sessionUser.name.charAt(0).toUpperCase() : sessionUser.username?.charAt(0)?.toUpperCase()}
+            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shrink-0 shadow-md">
+              <span className="text-[#3B82F6] font-black text-sm">
+                {sessionUser.username?.charAt(0)?.toUpperCase()}
+              </span>
             </div>
           </div>
         </div>
@@ -359,17 +367,17 @@ export default function TambahUser() {
                 </span>
               </div>
             </div>
-            <div className="hidden md:flex items-center gap-3 bg-white hover:bg-blue-50/50 py-1.5 px-3 rounded-full border border-slate-200/80 cursor-pointer shadow-sm hover:shadow transition-all duration-300" onClick={() => navigate('/profile')}>
+            <div className="flex items-center gap-3">
               <div className="text-right">
-                <p className="text-slate-800 font-extrabold text-xs leading-none">
-                  {sessionUser.name || sessionUser.username}
-                </p>
-                <p className="text-blue-500 text-[10px] font-bold mt-1">
-                  Administrator
-                </p>
+                <h3 className="text-white font-black text-[15px] leading-tight">
+                  {sessionUser.username}
+                </h3>
+                <p className="text-blue-100 font-bold text-[11px]">Admin</p>
               </div>
-              <div className="w-8 h-8 rounded-full bg-blue-600/90 flex items-center justify-center shadow-inner text-white font-bold text-xs">
-                {sessionUser.name ? sessionUser.name.charAt(0).toUpperCase() : sessionUser.username?.charAt(0)?.toUpperCase()}
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center border-2 border-white/40 shadow-lg">
+                <span className="text-white font-black text-sm">
+                  {sessionUser.username?.charAt(0)?.toUpperCase()}
+                </span>
               </div>
             </div>
           </div>
@@ -556,7 +564,7 @@ export default function TambahUser() {
                 <div className="space-y-5">
                   <h3 className="text-[12px] font-black text-[#3B82F6] uppercase tracking-widest border-b border-blue-100 pb-2">
                     {formData.role === "Staff IT"
-                      ? "Pilih Leader"
+                      ? "Pilih Leader *"
                       : "Pilih Staff Anggota"}
                   </h3>
 
@@ -567,6 +575,7 @@ export default function TambahUser() {
                         value={selectedLeaderId}
                         onChange={(e) => setSelectedLeaderId(e.target.value)}
                         disabled={leadsLoading}
+                        required={formData.role === "Staff IT"}
                         className="w-full bg-[#F8FAFF] border border-slate-200 rounded-2xl px-5 py-3 text-slate-700 font-bold text-[14px] outline-none appearance-none cursor-pointer focus:border-[#3B82F6] focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all disabled:opacity-60 disabled:cursor-wait"
                       >
                         <option value="">
@@ -613,7 +622,7 @@ export default function TambahUser() {
                               .filter((s) => !selectedStaffIds.includes(s.id))
                               .map((s) => (
                                 <option key={s.id} value={s.id}>
-                                  {s.name} ({s.role})
+                                  {s.name} ({s.roleName})
                                 </option>
                               ))}
                           </select>

@@ -9,7 +9,8 @@ const axiosClient = axios.create({
 
 // Attach JWT token ke setiap request jika tersedia
 axiosClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+  const token = currentUser?.token;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

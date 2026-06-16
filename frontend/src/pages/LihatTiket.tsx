@@ -77,13 +77,6 @@ export default function LihatTiket() {
         return matchTech && matchPriority && matchStatus && matchDate;
     }).sort((a, b) => getPriorityWeight(calculateDynamicPriority(b.date, b.status, b.completedAt, b.reopenCount > 0), b.status) - getPriorityWeight(calculateDynamicPriority(a.date, a.status, a.completedAt, a.reopenCount > 0), a.status));
 
-    const handleHome = () => {
-        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        if (user.role === 'ADMINISTRATOR') navigate('/dashboard-admin');
-        else if (user.role === 'EMPLOYEE') navigate('/dashboard-staff');
-        else navigate('/dashboard-head');
-    };
-
     // ================= STYLE HANDLERS =================
     const getStatusStyle = (status: string) => {
         switch (status) {
@@ -109,7 +102,7 @@ export default function LihatTiket() {
                             <span className="text-[#1E40AF] font-black text-[14px] md:text-[15px] tracking-wide">Lihat Tiket</span>
                         </div>
                     </div>
-                    <button onClick={handleHome} className="flex items-center gap-2 bg-blue-800/40 hover:bg-blue-800/80 px-4 py-1.5 rounded-full transition-colors border-2 border-blue-900/50 shrink-0">
+                    <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 bg-blue-800/40 hover:bg-blue-800/80 px-4 py-1.5 rounded-full transition-colors border-2 border-blue-900/50 shrink-0">
                         <div className="bg-white rounded-full p-0.5">
                             <svg className="w-3.5 h-3.5 text-blue-900" fill="currentColor" viewBox="0 0 24 24"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>
                         </div>
@@ -264,8 +257,8 @@ export default function LihatTiket() {
 
                                         {/* Kolom Profil Teknisi */}
                                         <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full border-2 border-white shadow-sm bg-blue-100 flex items-center justify-center text-[12px] font-black text-blue-600 shrink-0">
-                                                {t.tech.charAt(0).toUpperCase()}
+                                            <div className="w-8 h-8 rounded-full border-2 border-white shadow-sm overflow-hidden bg-slate-200 shrink-0">
+                                                <img src={t.avatar} alt={t.tech} className="w-full h-full object-cover" />
                                             </div>
                                             <span className="text-[13px] font-bold text-slate-600 truncate">{t.tech}</span>
                                         </div>

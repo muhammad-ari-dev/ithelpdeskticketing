@@ -28,17 +28,19 @@ public class ConstantMessage {
     public static final String FAILED_DELETE    = "Gagal menghapus data";
     public static final String NOT_FOUND        = "Data tidak ditemukan";
     public static final String MUST_EXCEL       = "Format File Harus Excel";
+    public static final String ALREADY_EXISTS   = "Data sudah ada";
 
     // =============================================
     // PESAN AUTH
     // =============================================
     public static final String FAILED_REGIS         = "Registrasi Gagal";
     public static final String USER_PWD_SALAH       = "Username atau Password Salah";
+    public static final String PWD_ERROR            = "Password dan konfirmasi password tidak sama";
     public static final String OTP_SALAH            = "OTP Salah";
     public static final String USER_NOT_FOUND       = "User Tidak Ditemukan";
     public static final String ERROR_AUTH           = "Otentikasi Bermasalah";
     public static final String ACCOUNT_NOT_ACTIVE   = "Akun Belum Aktif";
-    public static final String TOKEN_ERROR          = "Token salah atau expired";
+    public static final String TOKEN_ERROR          = "Token invalid atau expired";
 
     // =============================================
     // PESAN FITUR BARU — EMPLOYEE MANAGEMENT
@@ -61,6 +63,7 @@ public class ConstantMessage {
 
     /** changePassword — password baru sama dengan password lama */
     public static final String SAME_PASSWORD         = "Password baru tidak boleh sama dengan password lama";
+    public static final String CONFIRM_PWD_ERROR     = "Konfirmasi password gagal";
 
     // =============================================
     // PESAN VALIDASI — USERNAME

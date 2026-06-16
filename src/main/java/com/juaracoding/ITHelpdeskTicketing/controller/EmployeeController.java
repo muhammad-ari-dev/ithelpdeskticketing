@@ -3,8 +3,8 @@ package com.juaracoding.ITHelpdeskTicketing.controller;
 import com.juaracoding.ITHelpdeskTicketing.dto.validation.ChangePasswordDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.response.DisableUserDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.validation.RegisDTO;
-import com.juaracoding.ITHelpdeskTicketing.dto.validation.SetPasswordDTO;
 import com.juaracoding.ITHelpdeskTicketing.service.EmployeeService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +24,53 @@ public class EmployeeController {
     private EmployeeService employeeService;
 
     @GetMapping("/profile")
-    public ResponseEntity<Object> profile(@AuthenticationPrincipal UserDetails userDetails, HttpServletRequest request){
+    @SecurityRequirement(name = "helpdesk-api")
+    public ResponseEntity<Object> profile(
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest request){
         return employeeService.getProfile(userDetails.getUsername(), request);
+    }
+
+    /**
+     * CHANGE PASSWORD — Employee/Lead ganti password sendiri
+     *
+     * Method: PATCH
+     * Endpoint: PATCH /api/employee/change-password
+     * Butuh: JWT Token (employee yang sedang login)
+     * Body: { "oldPassword": "...", "newPassword": "...", "confirmPassword": "..." }
+     *
+     * PERBEDAAN DENGAN RESET PASSWORD:
+     *   resetPassUser → dilakukan ADMIN untuk orang lain, tidak perlu password lama
+     *   changePassword → dilakukan DIRI SENDIRI, wajib verifikasi password lama dulu
+     *
+     * KEAMANAN:
+     *   Username TIDAK diambil dari request body, tapi dari JWT token.
+     *   Sehingga tidak mungkin employee A bisa ganti password employee B.
+     *
+     * Flow:
+     *   Employee login → buka halaman ganti password
+     *   → Input password lama + password baru + konfirmasi
+     *   → Frontend kirim PATCH request (dengan JWT token di header)
+     *   → Backend verifikasi password lama dulu
+     *   → Jika benar → hash password baru → simpan
+     */
+    @PatchMapping("/change-password")
+    @SecurityRequirement(name = "helpdesk-api")
+    public ResponseEntity<Object> changePassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody ChangePasswordDTO changePasswordDTO,
+            HttpServletRequest request
+    ) {
+        return employeeService.changePassword(userDetails.getUsername(), changePasswordDTO, request);
+    }
+
+    @GetMapping("/leads")
+    @SecurityRequirement(name = "helpdesk-api")
+    public ResponseEntity<Object> getLeads(
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest request
+    ) {
+        return employeeService.getAllLeads(userDetails.getUsername(), request);
     }
 
     // =========================================================
@@ -33,22 +78,12 @@ public class EmployeeController {
     // =========================================================
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerEmployee(@Valid @RequestBody RegisDTO regisDTO) {
-        try {
-            String result = employeeService.registerEmployee(regisDTO);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
-    @GetMapping("/leads")
-    public ResponseEntity<?> getLeads() {
-        try {
-            return ResponseEntity.ok(employeeService.getAllLeads());
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    @SecurityRequirement(name = "helpdesk-api")
+    public ResponseEntity<Object> registerEmployee(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody RegisDTO regisDTO,
+            HttpServletRequest request){
+            return employeeService.registerEmployee(regisDTO, request);
     }
 
     // =========================================================
@@ -111,39 +146,6 @@ public class EmployeeController {
     public ResponseEntity<?> resetPassUser(@Valid @RequestBody DisableUserDTO dto) {
         try {
             String result = employeeService.resetPassUser(dto);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
-    /**
-     * CHANGE PASSWORD — Employee/Lead ganti password sendiri
-     *
-     * Method: PATCH
-     * Endpoint: PATCH /api/employee/change-password
-     * Butuh: JWT Token (employee yang sedang login)
-     * Body: { "oldPassword": "...", "newPassword": "...", "confirmPassword": "..." }
-     *
-     * PERBEDAAN DENGAN RESET PASSWORD:
-     *   resetPassUser → dilakukan ADMIN untuk orang lain, tidak perlu password lama
-     *   changePassword → dilakukan DIRI SENDIRI, wajib verifikasi password lama dulu
-     *
-     * KEAMANAN:
-     *   Username TIDAK diambil dari request body, tapi dari JWT token.
-     *   Sehingga tidak mungkin employee A bisa ganti password employee B.
-     *
-     * Flow:
-     *   Employee login → buka halaman ganti password
-     *   → Input password lama + password baru + konfirmasi
-     *   → Frontend kirim PATCH request (dengan JWT token di header)
-     *   → Backend verifikasi password lama dulu
-     *   → Jika benar → hash password baru → simpan
-     */
-    @PatchMapping("/change-password")
-    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordDTO dto) {
-        try {
-            String result = employeeService.changePassword(dto);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

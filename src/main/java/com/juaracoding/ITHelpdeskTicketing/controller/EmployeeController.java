@@ -23,6 +23,14 @@ public class EmployeeController {
     @Autowired
     private EmployeeService employeeService;
 
+    @GetMapping("/employees")
+    @SecurityRequirement(name = "helpdesk-api")
+    public ResponseEntity<Object> getEmployees(
+            HttpServletRequest request
+    ){
+        return employeeService.getEmployees(request);
+    }
+
     @GetMapping("/profile")
     @SecurityRequirement(name = "helpdesk-api")
     public ResponseEntity<Object> profile(
@@ -67,10 +75,9 @@ public class EmployeeController {
     @GetMapping("/leads")
     @SecurityRequirement(name = "helpdesk-api")
     public ResponseEntity<Object> getLeads(
-            @AuthenticationPrincipal UserDetails userDetails,
             HttpServletRequest request
     ) {
-        return employeeService.getAllLeads(userDetails.getUsername(), request);
+        return employeeService.getAllLeads(request);
     }
 
     // =========================================================
@@ -80,7 +87,6 @@ public class EmployeeController {
     @PostMapping("/register")
     @SecurityRequirement(name = "helpdesk-api")
     public ResponseEntity<Object> registerEmployee(
-            @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody RegisDTO regisDTO,
             HttpServletRequest request){
             return employeeService.registerEmployee(regisDTO, request);

@@ -157,17 +157,25 @@ public class AuthService implements UserDetailsService {
     public ResponseEntity<Object> setPassword(SetPasswordDTO setPasswordDTO, HttpServletRequest request) {
 
         if (!setPasswordDTO.getNewPassword().equals(setPasswordDTO.getConfirmPassword())) {
-            throw new RuntimeException(ConstantMessage.PWD_ERROR);
+            return new ResponseHandler()
+                    .handleResponse(ConstantMessage.PWD_ERROR, HttpStatus.BAD_REQUEST, null, request);
         }
 
-        Optional<Employee> optionalEmployee = employeeRepo.findByMagicToken(setPasswordDTO.getMagicToken());
-        if(optionalEmployee.isEmpty()){
-            throw new RuntimeException(ConstantMessage.TOKEN_ERROR);
+        Employee employee = employeeRepo.findByMagicToken(setPasswordDTO.getMagicToken())
+                .orElse(null);
+
+        if (employee == null) {
+            return new ResponseHandler()
+                    .handleResponse(ConstantMessage.TOKEN_ERROR, HttpStatus.UNAUTHORIZED, null, request);
         }
-        Employee employee = optionalEmployee.get();
 
         if (LocalDateTime.now().isAfter(employee.getMagicTokenExpiryAt())) {
-            throw new RuntimeException(ConstantMessage.TOKEN_ERROR);
+            employee.setMagicToken(null);
+            employee.setMagicTokenExpiryAt(null);
+            employeeRepo.save(employee);
+
+            return new ResponseHandler()
+                    .handleResponse(ConstantMessage.TOKEN_ERROR, HttpStatus.UNAUTHORIZED, null, request);
         }
 
         employee.setPassword(BcryptImpl.hash(employee.getUserName() + setPasswordDTO.getNewPassword()));

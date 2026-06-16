@@ -1,5 +1,6 @@
 package com.juaracoding.ITHelpdeskTicketing.service;
 
+import com.juaracoding.ITHelpdeskTicketing.dto.response.EmployeesResponseDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.response.ProfileResponseDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.validation.ChangePasswordDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.response.DisableUserDTO;
@@ -20,11 +21,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -47,28 +50,67 @@ public class EmployeeService {
     @Autowired
     JwtUtility jwtUtility;
 
-    public ResponseEntity<Object> getProfile(String username, HttpServletRequest request) {
+    public ResponseEntity<Object> getEmployees(HttpServletRequest request){
 
-        try {
-            Optional<Employee> optionalEmployee = employeeRepo.findByUserName(username);
-            if (optionalEmployee.isEmpty()) {
-                return new ResponseHandler()
-                        .handleResponse(ConstantMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND, null, request);
+        // 1. Get all employees
+        List<Employee> employees = employeeRepo.findAll();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH);
+
+        // 2. Map list elements to DTOs correctly using Streams
+        List<EmployeesResponseDTO> dtoList = employees.stream().map(employee -> {
+            EmployeesResponseDTO dto = modelMapper.map(employee, EmployeesResponseDTO.class);
+
+            // Map Role Name safely
+            if (employee.getRole() != null) {
+                dto.setRoleName(employee.getRole().getRoleName());
             }
 
-            Employee employeeDb = optionalEmployee.get();
+            // Format Created Date safely
+            if (employee.getCreatedAt() != null) {
+                dto.setCreatedAt(employee.getCreatedAt().format(formatter));
+            }
 
-            ProfileResponseDTO profile = modelMapper.map(employeeDb, ProfileResponseDTO.class);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", java.util.Locale.ENGLISH);
-            profile.setCreatedAt(employeeDb.getCreatedAt().format(formatter));
+            // Format Updated Date conditionally
+            if ("INACTIVE".equals(employee.getAccountStatus()) && employee.getUpdatedAt() != null) {
+                dto.setUpdatedAt(employee.getUpdatedAt().format(formatter));
+            }
 
+            // Map Leader Name safely (Handles null leads)
+            if (employee.getLead() != null) {
+                dto.setLeaderName(employee.getLead().getEmployeeName());
+            }
+
+            return dto;
+        }).toList();
+
+        // 3. Return the list of DTOs
+        return new ResponseHandler()
+                .handleResponse(ConstantMessage.OK, HttpStatus.OK, dtoList, request);
+
+    }
+
+    public ResponseEntity<Object> getProfile(String username, HttpServletRequest request) {
+
+        // 1. Find employee or return 404 immediately if not found
+        Employee employeeDb = employeeRepo.findByUserName(username)
+                .orElse(null);
+
+        if (employeeDb == null) {
             return new ResponseHandler()
-                    .handleResponse(ConstantMessage.OK, HttpStatus.OK, profile, request);
-
-        } catch (Exception e) {
-            return new ResponseHandler()
-                    .handleResponse(ConstantMessage.TOKEN_ERROR, HttpStatus.UNAUTHORIZED, null, request);
+                    .handleResponse(ConstantMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND, null, request);
         }
+
+        // 2. Map to DTO
+        ProfileResponseDTO profile = modelMapper.map(employeeDb, ProfileResponseDTO.class);
+
+        // 3. Format Date
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH);
+        profile.setCreatedAt(employeeDb.getCreatedAt().format(formatter));
+
+        // 4. Return successful response
+        return new ResponseHandler()
+                .handleResponse(ConstantMessage.OK, HttpStatus.OK, profile, request);
+
     }
 
     // =========================================================
@@ -97,99 +139,82 @@ public class EmployeeService {
     @Transactional
     public ResponseEntity<Object> changePassword(String username, ChangePasswordDTO changePasswordDTO, HttpServletRequest request) {
 
-        try {
-            /**
-             * Ambil username dari SecurityContext
-             *
-             * SecurityContext adalah "tempat penyimpanan sementara" yang diisi
-             * oleh JwtFilter setiap kali ada request dengan token valid.
-             *
-             * Analoginya: seperti kartu tanda masuk yang kamu tunjukkan ke satpam,
-             * satpam (JwtFilter) sudah verifikasi dan catat nama kamu,
-             * sekarang kita tinggal ambil catatan nama tersebut.
-             */
+        /**
+         * Ambil username dari SecurityContext
+         *
+         * SecurityContext adalah "tempat penyimpanan sementara" yang diisi
+         * oleh JwtFilter setiap kali ada request dengan token valid.
+         *
+         * Analoginya: seperti kartu tanda masuk yang kamu tunjukkan ke satpam,
+         * satpam (JwtFilter) sudah verifikasi dan catat nama kamu,
+         * sekarang kita tinggal ambil catatan nama tersebut.
+         */
 //        String username = SecurityContextHolder.getContext()
 //                .getAuthentication()
 //                .getName(); // ambil username dari token JWT yang sudah diverifikasi
 
-            // Cari employee di DB berdasarkan username dari token
-            Optional<Employee> optionalEmployee = employeeRepo.findByUserName(username);
-            if (optionalEmployee.isEmpty()) {
-                return new ResponseHandler()
-                        .handleResponse(ConstantMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND, null, request);
-            }
-            Employee employee = optionalEmployee.get();
-            /**
-             * Verifikasi password lama
-             *
-             * POLA: BcryptImpl.verifyHash(userName + oldPassword, hashedPassword)
-             * HARUS KONSISTEN dengan cara password di-hash saat setPassword()
-             */
-            if (!BcryptImpl.verifyHash(employee.getUserName() + changePasswordDTO.getOldPassword(), employee.getPassword())) {
-                return new ResponseHandler()
-                        .handleResponse(ConstantMessage.OLD_PASSWORD_WRONG, HttpStatus.BAD_REQUEST, null, request);
-            }
-            /**
-             * Cek password baru tidak sama dengan password lama
-             *
-             * MENGAPA PERLU DICEK?
-             * Tidak ada gunanya "ganti" password kalau isinya sama.
-             * Ini juga best practice keamanan — memaksa user benar-benar
-             * menggunakan password yang berbeda.
-             *
-             * Cara cek: verifikasi apakah newPassword cocok dengan hash yang ada.
-             * Jika cocok berarti sama dengan password lama → tolak.
-             */
-            if (BcryptImpl.verifyHash(employee.getUserName() + changePasswordDTO.getNewPassword(), employee.getPassword())) {
-                return new ResponseHandler()
-                        .handleResponse(ConstantMessage.SAME_PASSWORD, HttpStatus.BAD_REQUEST, null, request);
-            }
-
-            // Cek newPassword == confirmPassword
-            if (!changePasswordDTO.getNewPassword().equals(changePasswordDTO.getConfirmPassword())) {
-                return new ResponseHandler()
-                        .handleResponse(ConstantMessage.CONFIRM_PWD_ERROR, HttpStatus.BAD_REQUEST, null, request);
-            }
-
-            // Hash password baru dan simpan
-            employee.setPassword(BcryptImpl.hash(employee.getUserName() + changePasswordDTO.getNewPassword()));
-            employee.setUpdatedBy(username);
-            employeeRepo.save(employee);
-
+        // Cari employee di DB berdasarkan username dari token
+        // 1. Fetch employee securely or return 404 immediately
+        Employee employee = employeeRepo.findByUserName(username)
+                .orElseThrow(() -> new UsernameNotFoundException(ConstantMessage.USER_NOT_FOUND));
+        /**
+         * Verifikasi password lama
+         *
+         * POLA: BcryptImpl.verifyHash(userName + oldPassword, hashedPassword)
+         * HARUS KONSISTEN dengan cara password di-hash saat setPassword()
+         */
+        if (!BcryptImpl.verifyHash(employee.getUserName() + changePasswordDTO.getOldPassword(), employee.getPassword())) {
             return new ResponseHandler()
-                    .handleResponse(ConstantMessage.SUCCESS_CHANGE_PASS, HttpStatus.OK, null, request);
-
-        } catch (Exception e) {
-            return new ResponseHandler()
-                    .handleResponse(ConstantMessage.TOKEN_ERROR, HttpStatus.UNAUTHORIZED, null, request);
+                    .handleResponse(ConstantMessage.OLD_PASSWORD_WRONG, HttpStatus.BAD_REQUEST, null, request);
         }
+        /**
+         * Cek password baru tidak sama dengan password lama
+         *
+         * MENGAPA PERLU DICEK?
+         * Tidak ada gunanya "ganti" password kalau isinya sama.
+         * Ini juga best practice keamanan — memaksa user benar-benar
+         * menggunakan password yang berbeda.
+         *
+         * Cara cek: verifikasi apakah newPassword cocok dengan hash yang ada.
+         * Jika cocok berarti sama dengan password lama → tolak.
+         */
+        if (BcryptImpl.verifyHash(employee.getUserName() + changePasswordDTO.getNewPassword(), employee.getPassword())) {
+            return new ResponseHandler()
+                    .handleResponse(ConstantMessage.SAME_PASSWORD, HttpStatus.BAD_REQUEST, null, request);
+        }
+
+        // Cek newPassword == confirmPassword
+        if (!changePasswordDTO.getNewPassword().equals(changePasswordDTO.getConfirmPassword())) {
+            return new ResponseHandler()
+                    .handleResponse(ConstantMessage.CONFIRM_PWD_ERROR, HttpStatus.BAD_REQUEST, null, request);
+        }
+
+        // Hash password baru dan simpan
+        employee.setPassword(BcryptImpl.hash(employee.getUserName() + changePasswordDTO.getNewPassword()));
+        employee.setUpdatedBy(username);
+        employeeRepo.save(employee);
+
+        return new ResponseHandler()
+                .handleResponse(ConstantMessage.SUCCESS_CHANGE_PASS, HttpStatus.OK, null, request);
+
     }
 
     // =========================================================
     // FITUR: GET ALL LEADS
     // =========================================================
-    public ResponseEntity<Object> getAllLeads(String username, HttpServletRequest request) {
+    public ResponseEntity<Object> getAllLeads(HttpServletRequest request) {
 
-        try {
-            Optional<Employee> optionalEmployee = employeeRepo.findByUserName(username);
-            if (optionalEmployee.isEmpty()) {
-                return new ResponseHandler()
-                        .handleResponse(ConstantMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND, null, request);
-            }
+        // 1. Directly fetch all employees with the role 'LEAD'
+        List<Employee> leads = employeeRepo.findByRole_RoleNameIgnoreCase("LEAD");
 
-            List<Employee> leads = employeeRepo.findByRole_RoleNameIgnoreCase("LEAD");
+        // 2. Map the entities directly to DTOs
+        List<LeadResponseDTO> leadsDtoList = leads.stream()
+                .map(employee -> modelMapper.map(employee, LeadResponseDTO.class))
+                .toList();
 
-            List<LeadResponseDTO> leadsDtoList = leads.stream()
-                    .map(employee -> modelMapper.map(employee, LeadResponseDTO.class))
-                    .toList();
+        return new ResponseHandler()
+                .handleResponse(ConstantMessage.OK, HttpStatus.OK, leadsDtoList, request);
 
-            return new ResponseHandler()
-                    .handleResponse(ConstantMessage.OK, HttpStatus.OK, leadsDtoList, request);
-
-        } catch (Exception e) {
-            return new ResponseHandler()
-                    .handleResponse(ConstantMessage.TOKEN_ERROR, HttpStatus.UNAUTHORIZED, null, request);
-        }
     }
 
     // =========================================================
@@ -198,61 +223,59 @@ public class EmployeeService {
     @Transactional
     public ResponseEntity<Object> registerEmployee(RegisDTO regisDTO, HttpServletRequest request) {
 
-        try {
-            if (employeeRepo.existsByUserName(regisDTO.getUserName())) {
-                throw new RuntimeException(ConstantMessage.ALREADY_EXISTS);
-            }
-            if (employeeRepo.existsByEmail(regisDTO.getEmail())) {
-                throw new RuntimeException(ConstantMessage.ALREADY_EXISTS);
-            }
+        if (employeeRepo.existsByUserName(regisDTO.getUserName())) {
+            return new ResponseHandler()
+                    .handleResponse(ConstantMessage.ALREADY_EXISTS, HttpStatus.CONFLICT, null, request);
+        }
+        if (employeeRepo.existsByEmail(regisDTO.getEmail())) {
+            return new ResponseHandler()
+                    .handleResponse(ConstantMessage.ALREADY_EXISTS, HttpStatus.CONFLICT, null, request);
+        }
 
-            Employee employee = new Employee();
-            employee.setEmployeeName(regisDTO.getEmployeeName());
-            employee.setUserName(regisDTO.getUserName());
-            employee.setEmail(regisDTO.getEmail());
-            employee.setNoHp(regisDTO.getNoHp());
-            employee.setPassword(BcryptImpl.hash(regisDTO.getUserName() + "DEFAULT_PASSWORD_TEMP"));
-            employee.setCreatedBy("ADMIN");
+        Employee employee = new Employee();
+        employee.setEmployeeName(regisDTO.getEmployeeName());
+        employee.setUserName(regisDTO.getUserName());
+        employee.setEmail(regisDTO.getEmail());
+        employee.setNoHp(regisDTO.getNoHp());
+        employee.setPassword(BcryptImpl.hash(regisDTO.getUserName() + "DEFAULT_PASSWORD_TEMP"));
+        employee.setCreatedBy("ADMIN");
 
-            Optional<Role> optionalRole = roleRepo.findByRoleName(regisDTO.getRoleName());
-            if (optionalRole.isEmpty()) {
+        Role role = roleRepo.findByRoleName(regisDTO.getRoleName())
+                .orElse(null);
+        if (role == null) {
+            return new ResponseHandler()
+                    .handleResponse(ConstantMessage.NOT_FOUND, HttpStatus.NOT_FOUND, null, request);
+        }
+        employee.setRole(role);
+
+        if ("LEAD".equalsIgnoreCase(role.getRoleName()) ||
+                "ADMINISTRATOR".equalsIgnoreCase(role.getRoleName())) {
+            employee.setLead(null);
+        } else {
+            if (regisDTO.getLeadID() == null || regisDTO.getLeadID().isEmpty()) {
+                throw new RuntimeException(ConstantMessage.NOT_NULL);
+            }
+            UUID leadUuid = UUID.fromString(regisDTO.getLeadID());
+            Optional<Employee> optionalEmployeeLead = employeeRepo.findById(leadUuid);
+            if (optionalEmployeeLead.isEmpty()) {
                 throw new RuntimeException(ConstantMessage.NOT_FOUND);
             }
-            Role role = optionalRole.get();
-            employee.setRole(role);
-
-            if ("LEAD".equalsIgnoreCase(role.getRoleName()) ||
-                    "ADMINISTRATOR".equalsIgnoreCase(role.getRoleName())) {
-                employee.setLead(null);
-            } else {
-                if (regisDTO.getLeadID() == null || regisDTO.getLeadID().isEmpty()) {
-                    throw new RuntimeException(ConstantMessage.NOT_NULL);
-                }
-                UUID leadUuid = UUID.fromString(regisDTO.getLeadID());
-                Optional<Employee> optionalEmployeeLead = employeeRepo.findById(leadUuid);
-                if (optionalEmployeeLead.isEmpty()) {
-                    throw new RuntimeException(ConstantMessage.NOT_FOUND);
-                }
-                Employee lead = optionalEmployeeLead.get();
-                employee.setLead(lead);
-            }
-
-            employee.setAccountStatus("PENDING");
-
-            String magicToken = UUID.randomUUID().toString();
-            employee.setMagicToken(magicToken);
-            employee.setMagicTokenExpiryAt(LocalDateTime.now().plusDays(7));
-
-            employeeRepo.save(employee);
-            emailService.sendMagicLink(employee.getEmail(), magicToken);
-
-            return new ResponseHandler()
-                    .handleResponse(ConstantMessage.OK, HttpStatus.OK, null, request);
-
-        } catch (Exception e) {
-            return new ResponseHandler()
-                    .handleResponse(ConstantMessage.TOKEN_ERROR, HttpStatus.UNAUTHORIZED, null, request);
+            Employee lead = optionalEmployeeLead.get();
+            employee.setLead(lead);
         }
+
+        employee.setAccountStatus("PENDING");
+
+        String magicToken = UUID.randomUUID().toString();
+        employee.setMagicToken(magicToken);
+        employee.setMagicTokenExpiryAt(LocalDateTime.now().plusDays(7));
+
+        employeeRepo.save(employee);
+        emailService.sendMagicLink(employee.getEmail(), magicToken);
+
+        return new ResponseHandler()
+                .handleResponse(ConstantMessage.OK, HttpStatus.OK, null, request);
+
     }
 
     // =========================================================

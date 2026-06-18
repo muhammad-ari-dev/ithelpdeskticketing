@@ -173,7 +173,7 @@ export default function DashboardHead() {
         <div className="flex-1 py-6 flex flex-col gap-2.5 px-3.5 overflow-y-auto overflow-x-hidden">
           {/* Menu: Dashboard (AKTIF) */}
           <div
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/dashboard-head")}
             className="flex items-center gap-3.5 bg-white/20 text-white border-l-[3.5px] border-white px-4 py-3 rounded-xl font-bold cursor-pointer transition-all hover:bg-white/25 group"
           >
             <svg
@@ -249,6 +249,34 @@ export default function DashboardHead() {
               </span>
             </div>
           ))}
+
+          {/* Sign Out Button in Sidebar */}
+          <div
+            onClick={() => {
+              localStorage.removeItem("currentUser");
+              navigate("/");
+            }}
+            className="mt-auto flex items-center gap-3.5 text-blue-100/80 px-4 py-3 rounded-xl font-semibold cursor-pointer transition-all hover:bg-red-500/20 hover:text-red-100 group"
+          >
+            <svg
+              className="w-5 h-5 shrink-0 group-hover:scale-105 transition-transform"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.5"
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              />
+            </svg>
+            <span
+              className={`whitespace-nowrap text-[13px] tracking-wide transition-all duration-300 ${isSidebarOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 hidden"}`}
+            >
+              SIGN OUT
+            </span>
+          </div>
         </div>
       </div>
 
@@ -277,24 +305,17 @@ export default function DashboardHead() {
               />
             </svg>
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 bg-white hover:bg-blue-50/50 py-1.5 px-3 rounded-full border border-slate-200/80 cursor-pointer shadow-sm hover:shadow transition-all duration-300" onClick={() => navigate('/profile')}>
             <div className="text-right hidden sm:block">
-              <p className="text-xs font-black uppercase tracking-widest text-[#3B82F6]">
-                Welcome Back
+              <p className="text-slate-500 font-bold text-xs leading-none">
+                {currentUser?.userName || currentUser?.username}
               </p>
-              <p className="text-sm font-extrabold text-slate-800">
-                {currentUser.name}
+              <p className="text-blue-500 text-[10px] font-bold mt-1 leading-none">
+                {currentUser?.roleName || "Head IT"}
               </p>
             </div>
-            <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center p-0.5 shadow-inner">
-              <img
-                src={
-                  users.find((u) => u.name === currentUser.name)?.avatar ||
-                  "https://i.pravatar.cc/150?img=68"
-                }
-                alt="User"
-                className="w-full h-full rounded-full object-cover"
-              />
+            <div className="w-8 h-8 bg-blue-600/90 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-inner">
+              {(currentUser?.employeeName || currentUser?.name || currentUser?.userName || currentUser?.username || "U").charAt(0).toUpperCase()}
             </div>
           </div>
         </div>
@@ -336,15 +357,15 @@ export default function DashboardHead() {
             title="Sign Out"
           >
             <div className="text-right hidden sm:block">
-              <p className="text-slate-800 font-extrabold text-xs leading-none">
-                {currentUser.name}
+              <p className="text-slate-500 font-bold text-xs leading-none">
+                {currentUser?.userName || currentUser?.username}
               </p>
-              <p className="text-blue-500 text-[10px] font-bold mt-1">
-                Head IT
+              <p className="text-blue-500 text-[10px] font-bold mt-1 leading-none">
+                {currentUser?.roleName || "Head IT"}
               </p>
             </div>
             <div className="w-8 h-8 bg-blue-600/90 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-inner">
-              {/* {currentUser.name.charAt(0).toUpperCase()} */}
+              {(currentUser?.employeeName || currentUser?.name || currentUser?.userName || currentUser?.username || "U").charAt(0).toUpperCase()}
             </div>
           </div>
         </header>
@@ -552,26 +573,24 @@ export default function DashboardHead() {
 
                       <div className="w-full sm:w-[20%] mb-3 sm:mb-0">
                         <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold border shadow-sm ${
-                            t.status === "Completed"
-                              ? "bg-emerald-50 text-emerald-600 border-emerald-150"
-                              : t.status === "Reopen"
-                                ? "bg-amber-50 text-amber-600 border-amber-150"
-                                : t.status === "In Progress"
-                                  ? "bg-blue-50 text-blue-600 border-blue-150"
-                                  : "bg-rose-50 text-rose-600 border-rose-150"
-                          }`}
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold border shadow-sm ${t.status === "Completed"
+                            ? "bg-emerald-50 text-emerald-600 border-emerald-150"
+                            : t.status === "Reopen"
+                              ? "bg-amber-50 text-amber-600 border-amber-150"
+                              : t.status === "In Progress"
+                                ? "bg-blue-50 text-blue-600 border-blue-150"
+                                : "bg-rose-50 text-rose-600 border-rose-150"
+                            }`}
                         >
                           <span
-                            className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                              t.status === "Completed"
-                                ? "bg-emerald-500"
-                                : t.status === "Reopen"
-                                  ? "bg-amber-500"
-                                  : t.status === "In Progress"
-                                    ? "bg-blue-500"
-                                    : "bg-rose-500"
-                            }`}
+                            className={`w-1.5 h-1.5 rounded-full mr-1.5 ${t.status === "Completed"
+                              ? "bg-emerald-500"
+                              : t.status === "Reopen"
+                                ? "bg-amber-500"
+                                : t.status === "In Progress"
+                                  ? "bg-blue-500"
+                                  : "bg-rose-500"
+                              }`}
                           ></span>
                           {t.status}
                         </span>

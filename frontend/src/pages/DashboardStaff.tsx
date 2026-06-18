@@ -259,21 +259,17 @@ export default function DashboardStaff() {
               />
             </svg>
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 bg-white hover:bg-blue-50/50 py-1.5 px-3 rounded-full border border-slate-200/80 cursor-pointer shadow-sm hover:shadow transition-all duration-300" onClick={() => navigate('/profile')}>
             <div className="text-right hidden sm:block">
-              <p className="text-xs font-black uppercase tracking-widest text-[#3B82F6]">
-                Staff Dashboard
+              <p className="text-slate-500 font-bold text-xs leading-none">
+                {currentUser?.userName || currentUser?.username}
               </p>
-              <p className="text-sm font-extrabold text-slate-800">
-                {currentUser?.username}
+              <p className="text-blue-500 text-[10px] font-bold mt-1 leading-none">
+                {currentUser?.roleName || "Staff IT"}
               </p>
             </div>
-            <div className="w-10 h-10 rounded-full border-2 border-[#3B82F6] overflow-hidden p-0.5 bg-white">
-              <img
-                src={getMyAvatar()}
-                alt="Profile"
-                className="w-full h-full rounded-full object-cover"
-              />
+            <div className="w-8 h-8 bg-blue-600/90 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-inner">
+              {(currentUser?.employeeName || currentUser?.name || currentUser?.userName || currentUser?.username || "U").charAt(0).toUpperCase()}
             </div>
           </div>
         </div>
@@ -290,21 +286,17 @@ export default function DashboardStaff() {
                   Pantau kinerja dan tugas yang ditugaskan kepada Anda.
                 </p>
               </div>
-              <div className="hidden md:flex items-center gap-4 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-2xl border border-slate-200/60 shadow-sm">
-                <div className="text-right">
-                  <p className="text-[11px] font-black uppercase tracking-widest text-blue-600">
-                    Welcome Back
+              <div className="flex items-center gap-3 bg-white hover:bg-blue-50/50 py-1.5 px-3 rounded-full border border-slate-200/80 cursor-pointer shadow-sm hover:shadow transition-all duration-300" onClick={() => navigate('/profile')}>
+                <div className="text-right hidden sm:block">
+                  <p className="text-slate-500 font-bold text-xs leading-none">
+                    {currentUser?.userName || currentUser?.username}
                   </p>
-                  <p className="text-[14px] font-extrabold text-slate-800 mb-0.5">
-                    {currentUser?.username}
+                  <p className="text-blue-500 text-[10px] font-bold mt-1 leading-none">
+                    {currentUser?.roleName || "Staff IT"}
                   </p>
                 </div>
-                <div className="w-12 h-12 rounded-full border-2 border-white shadow-md overflow-hidden bg-white">
-                  <img
-                    src={getMyAvatar()}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
+                <div className="w-8 h-8 bg-blue-600/90 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-inner">
+                  {(currentUser?.employeeName || currentUser?.name || currentUser?.userName || currentUser?.username || "U").charAt(0).toUpperCase()}
                 </div>
               </div>
             </div>

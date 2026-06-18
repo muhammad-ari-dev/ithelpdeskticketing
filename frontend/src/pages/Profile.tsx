@@ -3,6 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { useUserContext } from '../context/UserContext';
 import { authApi } from '../api/authApi';
 
+// ============================================================
+// KOMPONEN GELOMBANG BIRU
+// ============================================================
+const BlueWave = () => (
+    <div className="absolute bottom-0 left-0 w-full z-0 pointer-events-none overflow-hidden">
+        <svg viewBox="0 0 1440 170" className="w-full h-[130px]" preserveAspectRatio="none">
+            <defs>
+                <filter id="waveHeadShadow">
+                    <feDropShadow dx="0" dy="-6" stdDeviation="12" floodColor="#3B82F6" floodOpacity="0.15" />
+                </filter>
+            </defs>
+            <path fill="#3B82F6" filter="url(#waveHeadShadow)" d="M0,120 C240,170 480,60 720,110 C960,160 1180,50 1440,100 L1440,170 L0,170 Z" opacity="0.28" />
+            <path fill="#2563EB" d="M0,145 C180,110 360,165 540,135 C720,105 900,158 1080,125 C1200,105 1360,155 1440,142 L1440,170 L0,170 Z" opacity="0.42" />
+        </svg>
+    </div>
+);
+
+
 interface UserProfile { 
     id: string,
     name: string,
@@ -141,20 +159,41 @@ export default function Profile() {
     }
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-8 font-sans relative overflow-hidden flex justify-center">
-            {/* Ambient eye-comfort background glows */}
-            <div className="absolute top-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-400/10 blur-[130px] pointer-events-none z-0"></div>
-            <div className="absolute bottom-[-10%] left-[-10%] w-[45vw] h-[45vw] rounded-full bg-indigo-400/10 blur-[100px] pointer-events-none z-0"></div>
+               <div className="min-h-screen bg-[#F0F6FF] p-4 md:p-8 font-sans relative overflow-hidden flex justify-center">
+            {/* Ambient blobs */}
+            <div className="absolute top-[-15%] right-[-10%] w-[55vw] h-[55vw] rounded-full bg-blue-200/20 blur-[130px] pointer-events-none z-0" />
+            <div className="absolute bottom-[-10%] left-[-15%] w-[45vw] h-[45vw] rounded-full bg-indigo-200/15 blur-[100px] pointer-events-none z-0" />
+
+            <BlueWave />
 
             <div className="max-w-[1000px] w-full z-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                {/* Header Navigasi */}
-                <button 
-                    onClick={() => navigate(-1)} 
-                    className="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold mb-8 transition-colors"
-                >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-                    Kembali ke Dashboard
-                </button>
+                               {/* Navbar Atas */}
+                <div className="mb-8 flex items-center justify-between w-full bg-white/80 backdrop-blur-md px-4 sm:px-6 py-4 rounded-3xl border border-white/90 shadow-[0_8px_30px_rgba(59,130,246,0.06)]">
+                    <button 
+                        onClick={() => navigate(-1)} 
+                        className="group flex items-center gap-2 sm:gap-3 bg-slate-50 hover:bg-blue-50 px-4 sm:px-5 py-2.5 rounded-full transition-all duration-300 text-slate-600 hover:text-blue-600 font-extrabold text-sm border border-slate-100"
+                    >
+                        <div className="bg-white group-hover:bg-blue-100 text-slate-500 group-hover:text-blue-600 p-1.5 rounded-full shadow-sm transition-colors duration-300 hidden sm:block">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                        </div>
+                        <svg className="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                        <span>Home</span>
+                    </button>
+
+                    <h1 className="text-xl font-black text-slate-800 tracking-tight hidden md:block">Profil Pengguna</h1>
+
+                    <button 
+                        onClick={() => {
+                            localStorage.removeItem('currentUser');
+                            navigate('/login');
+                        }} 
+                        className="group flex items-center gap-2 sm:gap-2.5 bg-rose-50 hover:bg-rose-500 px-4 sm:px-5 py-2.5 rounded-full transition-all duration-300 text-rose-600 hover:text-white font-extrabold text-sm border border-rose-100 hover:border-rose-500 hover:shadow-[0_8px_20px_rgba(244,63,94,0.2)]"
+                    >
+                        <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                        <span>Sign Out</span>
+                    </button>
+                </div>
+
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     
@@ -162,14 +201,15 @@ export default function Profile() {
                     <div className="col-span-1">
                         <div className="bg-white/80 backdrop-blur-md border border-slate-100 rounded-[32px] p-8 flex flex-col items-center shadow-[0_15px_40px_rgba(30,58,138,0.03)] text-center">
                             <div className="relative mb-5">
-                                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-xl bg-slate-100">
-                                    <img src={user.avatar || 'https://i.pravatar.cc/150'} alt="Avatar" className="w-full h-full object-cover" />
+                                                               <div className="w-32 h-32 rounded-full border-4 border-white shadow-xl bg-blue-100 flex items-center justify-center text-[56px] font-black text-blue-600">
+                                    {user.name ? user.name.charAt(0).toUpperCase() : '?'}
+
                                 </div>
                                 <div className="absolute bottom-1 right-1 w-6 h-6 bg-emerald-500 border-2 border-white rounded-full"></div>
                             </div>
                             
                             <h2 className="text-2xl font-black text-slate-800">{user.name}</h2>
-                            <p className="text-blue-500 font-bold text-sm mt-1 mb-4">@{user.username}</p>
+                            <p className="text-blue-500 font-bold text-sm mt-1 mb-4">{user.username}</p>
                             
                             <span className="px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-xs font-black tracking-widest uppercase border border-indigo-100 mb-6">
                                 {user.roleName}
@@ -266,9 +306,7 @@ export default function Profile() {
                                         value={oldPassword}
                                         onChange={(e) => setOldPassword(e.target.value)}
                                         required
-                                        disabled={isSubmitting}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-slate-700 font-bold text-[14px] outline-none focus:bg-white focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all disabled:opacity-60"
-                                        placeholder="••••••••"
+                                    
                                     />
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

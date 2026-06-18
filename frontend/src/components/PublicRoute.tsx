@@ -41,8 +41,7 @@ export default function PublicRoute({ children }: PublicRouteProps) {
             if (e.persisted) {
                 const session = getSession();
                 if (session && session.token) {
-                    const decoded: any = jwtDecode(session.token);
-                    const roleName = decoded.roleName;
+                    const roleName = session.roleName || jwtDecode<any>(session.token).roleName;
                     // Force dynamic redirect if they magically got back to login via bfcache
                     if (roleName === 'ADMINISTRATOR') window.location.replace('/dashboard-admin');
                     else if (roleName === 'LEAD') window.location.replace('/dashboard-head');
@@ -64,8 +63,7 @@ export default function PublicRoute({ children }: PublicRouteProps) {
 
     // If logged in, send them away to their respective dashboard
     if (session && session.token) {
-        const decoded: any = jwtDecode(session.token);
-        const roleName = decoded.roleName;
+        const roleName = session.roleName || jwtDecode<any>(session.token).roleName;
         if (roleName === 'ADMINISTRATOR') return <Navigate to="/dashboard-admin" replace />;
         if (roleName === 'LEAD') return <Navigate to="/dashboard-head" replace />;
         if (roleName === 'EMPLOYEE') return <Navigate to="/dashboard-staff" replace />;

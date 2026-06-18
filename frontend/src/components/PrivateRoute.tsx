@@ -44,8 +44,7 @@ export default function PrivateRoute({ children, allowedRoles }: PrivateRoutePro
         return <Navigate to="/" state={{ from: location }} replace />;
     }
 
-    const decoded: any = jwtDecode(session.token);
-    const roleName = decoded.roleName;
+    const roleName = session.roleName || (session.token ? jwtDecode<any>(session.token).roleName : null);
 
     if (allowedRoles && !allowedRoles.includes(roleName)) {
         // Logged in but wrong role → redirect to login

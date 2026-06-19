@@ -82,6 +82,9 @@ jobs:
               -e "DB_USERNAME=${{ secrets.DEVOPS_JC_USERNAME }}" \
               -e "DB_PASSWORD=${{ secrets.DEVOPS_JC_PASSWORD }}" \
               -e "BASE_MAIL_URL=${{ secrets.BASE_MAIL_URL }}" \
+              -e "CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}" \
+              -e "CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}" \
+              -e "CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}" \
               ${{ secrets.DOCKER_USERNAME }}/ithelpdesk:latest
 
             # ── Frontend nginx (port 8090, proxy ke backend internal) ─

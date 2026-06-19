@@ -74,7 +74,7 @@ const BlueWave = () => (
 
 export default function DashboardAdmin() {
     const navigate = useNavigate();
-    const { users: contextUsers, updateUserStatus, removeUser, updateUser, getHeads, getStaffs } = useUserContext();
+    const { users: contextUsers, removeUser, updateUser, getStaffs } = useUserContext();
     const contextUsersRef = useRef(contextUsers);
 
     // ================= STATE =================
@@ -135,12 +135,6 @@ export default function DashboardAdmin() {
         setEditUser(user);
     };
 
-    const handleUpdateUserStatus = (user: User) => {
-        const newStatus = user.status === 'Aktif' ? 'Non Aktif' : 'Aktif';
-        updateUserStatus(user.id, newStatus);
-        setUsers(prev => prev.map(item => String(item.id) === String(user.id) ? { ...item, status: newStatus } : item));
-        setSelectedUser(prev => prev && String(prev.id) === String(user.id) ? { ...prev, status: newStatus } : prev);
-    };
 
     const handleRemoveUser = (user: User) => {
         removeUser(user.id);

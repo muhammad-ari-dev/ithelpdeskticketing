@@ -13,7 +13,7 @@ export default function Teknisi() {
     const currentUser = sessionRaw ? JSON.parse(sessionRaw) : { id: 'ariana', username: 'Ariana', role: 'HEAD_IT' };
 
     // Ambil semua staff IT tanpa mempedulikan Head IT (agar bisa melihat teknisi kosong di head lain)
-    const allTeknisiList = users.filter(u => u.role === 'Staff IT');
+    const allTeknisiList = users.filter(u => u.roleName === 'Staff IT');
 
     // Ambil data tiket dari localStorage untuk mengecek status pekerjaan teknisi
     const [tickets] = useState<any[]>(() => {

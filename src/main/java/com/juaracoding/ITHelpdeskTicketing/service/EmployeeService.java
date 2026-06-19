@@ -60,6 +60,7 @@ public class EmployeeService {
         List<EmployeesResponseDTO> dtoList = employees.stream().map(employee -> {
             EmployeesResponseDTO dto = modelMapper.map(employee, EmployeesResponseDTO.class);
 
+            dto.setId(employee.getId());
             dto.setStatus(employee.getAccountStatus());
             dto.setCreatedAt(employee.getCreatedAt().format(formatter));
 

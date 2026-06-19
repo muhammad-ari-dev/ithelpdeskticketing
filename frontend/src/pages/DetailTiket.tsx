@@ -16,7 +16,7 @@ export default function DetailTiket() {
         const [label, setLabel] = useState('');
 
         useEffect(() => {
-            let interval: NodeJS.Timeout;
+            let interval: any;
             const calculateTime = () => {
                 const now = new Date().getTime();
                 let targetTime = 0;
@@ -232,7 +232,7 @@ export default function DetailTiket() {
             updateFields.pointsEarned = finalPoints;
 
             // Update user points di global context
-            const techStaff = users.find(u => u.name === ticketData.teknisi && u.role === 'Staff IT');
+            const techStaff = users.find(u => u.name === ticketData.teknisi && u.roleName === 'Staff IT');
             if (techStaff) {
                 updateUserPoints(techStaff.id, finalPoints);
             }

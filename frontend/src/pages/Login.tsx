@@ -16,7 +16,7 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(true);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
-  // === STATE UNTUK ERROR POP UP ===
+
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [usernameError, setUsernameError] = useState("");
@@ -83,7 +83,8 @@ export default function Login() {
 
       if (!errorMsg || errorMsg.trim() === "") {
         // Jika backend tidak mengirim alasan spesifik (misal server down/CORS)
-        setPasswordError("password tidak sesuai dengan username");
+        setErrorMessage("Gagal terhubung ke server. Silakan periksa koneksi Anda.");
+        setShowErrorPopup(true);
         return;
       }
 
@@ -112,7 +113,8 @@ export default function Login() {
       } 
       // 3. Fallback jika response dari backend tidak terdeteksi kata kuncinya
       else {
-        setPasswordError("password tidak sesuai dengan username");
+        setErrorMessage(errorMsg);
+        setShowErrorPopup(true);
       }
     }
   }; // <== TAMBAHIN INI CUY! WAJIB BANGET BIAR FUNGSINYA SELESAI

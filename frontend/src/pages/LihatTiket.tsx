@@ -1,4 +1,4 @@
-import { useState, ChangeEvent } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { calculateDynamicPriority, getPriorityBadgeStyle, getPriorityWeight } from '../utils/ticketUtils';
 
@@ -8,7 +8,7 @@ export default function LihatTiket() {
 
     // ================= STATE DATA & FILTER =================
 
-    const [tickets, setTickets] = useState<any[]>(() => {
+    const [tickets] = useState<any[]>(() => {
         // Ambil data yang disimpan oleh halaman Buat Tiket
         const savedTickets = localStorage.getItem('ticketsData');
         if (savedTickets) {

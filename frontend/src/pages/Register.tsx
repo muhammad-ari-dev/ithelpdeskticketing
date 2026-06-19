@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LogoImg from '../assets/logolandscape.png';
-import axios from 'axios'; // 1. IMPORT AXIOS
 import RegisterAsset from '../assets/assetregister.png';
 import { type UserRole } from '../types';
 

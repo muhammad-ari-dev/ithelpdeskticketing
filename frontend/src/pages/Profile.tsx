@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUserContext } from '../context/UserContext';
 import { authApi } from '../api/authApi';
 
 interface UserProfile { 

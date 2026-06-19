@@ -9,4 +9,7 @@ import java.util.UUID;
 public interface TicketLogRepo extends JpaRepository<TicketLog, UUID> {
     // Menampilkan semua timeline berdasarkan satu tiket tertentu (diurutkan dari yang terbaru)
     List<TicketLog> findByTicket_IdOrderByCreatedAtDesc(UUID ticketId);
+
+    // Otomatis mengurutkan histori log tiket dari awal sampai akhir secara kronologis
+    List<TicketLog> findByTicketIdOrderByCreatedAtAsc(UUID ticketId);
 }

@@ -1,5 +1,7 @@
 package com.juaracoding.ITHelpdeskTicketing.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.juaracoding.ITHelpdeskTicketing.util.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -37,14 +39,13 @@ public class Employee extends BaseEntity {
     @Column(name = "MagicTokenExpiryAt")
     private LocalDateTime magicTokenExpiryAt; // 2: Batas waktu link (misal 24 jam)
 
-    @Column(name = "OtpExpiryAt")
-    private LocalDateTime otpExpiryAt;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "RoleID", nullable = false)
+    @JsonIgnore
     private Role role;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "LeadID")
+    @JsonIgnore
     private Employee lead;
 }

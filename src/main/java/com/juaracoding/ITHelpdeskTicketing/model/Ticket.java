@@ -1,5 +1,6 @@
 package com.juaracoding.ITHelpdeskTicketing.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.juaracoding.ITHelpdeskTicketing.util.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -8,7 +9,6 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "Ticket", schema = "helpdesk")
@@ -16,8 +16,9 @@ import java.util.UUID;
 @Setter
 public class Ticket extends BaseEntity {
 
-    @Column(name = "TicketCode", unique = true)
-    private UUID ticketCode;
+    // UBAH: Sekarang pakai String biar bisa nampung "IT-190626-01"
+    @Column(name = "TicketCode", unique = true, length = 32)
+    private String ticketCode;
 
     @Column(name = "TicketName", nullable = false, length = 64)
     private String ticketName;
@@ -33,6 +34,7 @@ public class Ticket extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "EmployeeID")
+    @JsonIgnore
     private Employee assignedEmployee;
 
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)

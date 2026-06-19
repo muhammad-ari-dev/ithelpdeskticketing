@@ -88,19 +88,19 @@ export default function DashboardAdmin() {
     const [selectedUser, setSelectedUser] = useState<(User & { leaderName?: string }) | null>(null);
     const [deleteConfirmUser, setDeleteConfirmUser] = useState<(User & { leaderName?: string }) | null>(null);
     const [alertMessage, setAlertMessage] = useState<string | null>(null);
-    
+
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 9;
-    
+
     // Edit State
     const [editUser, setEditUser] = useState<User | null>(null);
-    const [editFormData, setEditFormData] = useState<{name: string, username: string, email: string, phone: string, leaderId?: string | null, staffIds?: string[]}>({ name: '', username: '', email: '', phone: '', leaderId: null, staffIds: [] });
+    const [editFormData, setEditFormData] = useState<{ name: string, username: string, email: string, phone: string, leaderId?: string | null, staffIds?: string[] }>({ name: '', username: '', email: '', phone: '', leaderId: null, staffIds: [] });
 
     // Session dari localStorage
     const sessionRaw = localStorage.getItem('currentUser');
     const currentUser = sessionRaw ? JSON.parse(sessionRaw) : { id: 'admin', username: 'Admin Master', roleName: 'ADMINISTRATOR' };
-    
+
     // ================= FUNGSI =================
     useEffect(() => {
         const loadEmployees = async () => {
@@ -178,7 +178,7 @@ export default function DashboardAdmin() {
 
             {/* ============ OVERLAY MOBILE ============ */}
             {isSidebarOpen && (
-                <div 
+                <div
                     className="md:hidden fixed inset-0 bg-slate-900/50 z-40 backdrop-blur-sm"
                     onClick={() => setIsSidebarOpen(false)}
                 ></div>
@@ -254,18 +254,19 @@ export default function DashboardAdmin() {
                 {/* Navbar Mobile */}
                 <div className="md:hidden bg-white/80 backdrop-blur-md px-6 py-4 flex items-center justify-between shadow-sm z-30 border-b border-slate-100">
                     <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-slate-600">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16" /></svg>
                     </button>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 bg-white hover:bg-blue-50/50 py-1.5 px-3 rounded-full border border-slate-200/80 cursor-pointer shadow-sm hover:shadow transition-all duration-300" onClick={() => navigate('/profile')}>
                         <div className="text-right hidden sm:block">
-                            <p className="text-xs font-black uppercase tracking-widest text-[#3B82F6]">Welcome Back</p>
-                            <p className="text-sm font-extrabold text-slate-800">{currentUser.username}</p>
+                            <p className="text-slate-500 font-bold text-xs leading-none">
+                                {currentUser?.userName || currentUser?.username}
+                            </p>
+                            <p className="text-blue-500 text-[10px] font-bold mt-1 leading-none">
+                                {currentUser?.roleName || "Administrator"}
+                            </p>
                         </div>
-                        <div 
-                            onClick={() => navigate('/profile')}
-                            className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center p-0.5 shadow-inner cursor-pointer hover:scale-105 transition-transform"
-                        >
-                            <img src={users.find(u => u.name === currentUser.username)?.avatar || 'https://i.pravatar.cc/150?img=68'} alt="User" className="w-full h-full rounded-full object-cover" />
+                        <div className="w-8 h-8 bg-blue-600/90 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-inner">
+                            {(currentUser?.employeeName || currentUser?.name || currentUser?.userName || currentUser?.username || "U").charAt(0).toUpperCase()}
                         </div>
                     </div>
                 </div>
@@ -318,16 +319,17 @@ export default function DashboardAdmin() {
                             </button> */}
                         </div>
 
-                        <div className="hidden md:flex items-center gap-4 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-2xl border border-slate-200/60 shadow-sm">
-                            <div className="text-right">
-                                <p className="text-[11px] font-black uppercase tracking-widest text-blue-600">Welcome Back</p>
-                                <p className="text-[14px] font-extrabold text-slate-800">{currentUser.username}</p>
+                        <div className="flex items-center gap-3 bg-white hover:bg-blue-50/50 py-1.5 px-3 rounded-full border border-slate-200/80 cursor-pointer shadow-sm hover:shadow transition-all duration-300" onClick={() => navigate('/profile')}>
+                            <div className="text-right hidden sm:block">
+                                <p className="text-slate-500 font-bold text-xs leading-none">
+                                    {currentUser?.userName || currentUser?.username}
+                                </p>
+                                <p className="text-blue-500 text-[10px] font-bold mt-1 leading-none">
+                                    {currentUser?.roleName || "Administrator"}
+                                </p>
                             </div>
-                            <div 
-                                onClick={() => navigate('/profile')}
-                                className="w-12 h-12 rounded-full border-2 border-white shadow-md overflow-hidden bg-white cursor-pointer hover:scale-105 transition-transform"
-                            >
-                                <img src={users.find(u => u.name === currentUser.username)?.avatar || 'https://i.pravatar.cc/150?img=68'} alt="User" className="w-full h-full rounded-full object-cover" />
+                            <div className="w-8 h-8 bg-blue-600/90 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-inner">
+                                {(currentUser?.employeeName || currentUser?.name || currentUser?.userName || currentUser?.username || "U").charAt(0).toUpperCase()}
                             </div>
                         </div>
                     </div>
@@ -492,15 +494,15 @@ export default function DashboardAdmin() {
                     {totalPages > 1 && (
                         <div className="mt-12 flex justify-center pb-8">
                             <div className="bg-white/80 backdrop-blur-sm rounded-full flex items-center px-4 py-2 gap-2 shadow-sm border border-slate-200/50">
-                                <button 
+                                <button
                                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                     disabled={currentPage === 1}
                                     className="p-1 text-slate-400 hover:text-blue-600 disabled:opacity-50 font-bold transition-colors"
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg>
                                 </button>
-                                
-                                {Array.from({length: totalPages}, (_, i) => i + 1).map(page => (
+
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                                     <button
                                         key={page}
                                         onClick={() => setCurrentPage(page)}
@@ -509,8 +511,8 @@ export default function DashboardAdmin() {
                                         {page}
                                     </button>
                                 ))}
-                                
-                                <button 
+
+                                <button
                                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                     disabled={currentPage === totalPages}
                                     className="p-1 text-slate-400 hover:text-blue-600 disabled:opacity-50 font-bold transition-colors"
@@ -527,11 +529,11 @@ export default function DashboardAdmin() {
             {selectedUser && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     {/* Backdrop */}
-                    <div 
-                        className="absolute inset-0 bg-slate-900/40 backdrop-blur-md animate-fade-in transition-opacity" 
+                    <div
+                        className="absolute inset-0 bg-slate-900/40 backdrop-blur-md animate-fade-in transition-opacity"
                         onClick={() => setSelectedUser(null)}
                     ></div>
-                    
+
                     {/* Modal Content */}
                     <div className="bg-white rounded-[32px] w-full max-w-md shadow-2xl relative z-10 animate-scale-up overflow-hidden border border-white/80 ring-1 ring-slate-100/50">
 
@@ -539,10 +541,10 @@ export default function DashboardAdmin() {
                         <div className={`h-36 w-full relative ${selectedUser.status === 'Aktif' ? 'bg-gradient-to-br from-blue-500 via-[#3B82F6] to-blue-700' : 'bg-gradient-to-br from-slate-400 via-slate-500 to-slate-700'}`}>
                             {/* Decorative element inside cover */}
                             <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
-                            
-                            <button 
-                                type="button" 
-                                onClick={() => setSelectedUser(null)} 
+
+                            <button
+                                type="button"
+                                onClick={() => setSelectedUser(null)}
                                 className="absolute top-4 right-4 text-white hover:bg-white/25 p-2 rounded-full transition-all backdrop-blur-md cursor-pointer active:scale-95 shadow-sm"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -561,10 +563,10 @@ export default function DashboardAdmin() {
                             {/* Avatar Section */}
                             <div className="absolute -top-16 left-8 flex items-end">
                                 <div className="w-[120px] h-[120px] rounded-full border-[6px] border-white shadow-xl overflow-hidden bg-white rotate-3 hover:rotate-0 transition-transform duration-300">
-                                    <img 
-                                        src={selectedUser.avatar} 
-                                        alt="Avatar" 
-                                        className={`w-full h-full object-cover -rotate-3 hover:rotate-0 transition-transform duration-300 ${selectedUser.status === 'Non Aktif' ? 'grayscale opacity-80' : ''}`} 
+                                    <img
+                                        src={selectedUser.avatar}
+                                        alt="Avatar"
+                                        className={`w-full h-full object-cover -rotate-3 hover:rotate-0 transition-transform duration-300 ${selectedUser.status === 'Non Aktif' ? 'grayscale opacity-80' : ''}`}
                                     />
                                 </div>
                                 <div className={`absolute bottom-2 right-2 w-6 h-6 rounded-full border-[3px] border-white shadow-md z-10 ${selectedUser.status === 'Aktif' ? 'bg-[#22c55e]' : 'bg-rose-500'}`}></div>
@@ -728,7 +730,7 @@ export default function DashboardAdmin() {
                                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold text-slate-700 outline-none focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all"
                                 />
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Username</label>

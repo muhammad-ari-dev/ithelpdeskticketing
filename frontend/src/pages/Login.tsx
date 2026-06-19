@@ -39,28 +39,40 @@ export default function Login() {
       // Response structure: response.data contains the actual payload
       const userData = response.data;
 
+      // Simpan token sementara agar axiosClient bisa mengakses endpoint profile
+      localStorage.setItem("currentUser", JSON.stringify({ token: userData.token }));
+
+      let profileData: any = {};
+      try {
+        const profileResponse = await authApi.getProfile();
+        profileData = profileResponse.data?.data || profileResponse.data;
+      } catch (err) {
+        console.error("Gagal mengambil data profil setelah login", err);
+      }
+
       // 2. Simpan data user asli dari BE ke localStorage
       localStorage.setItem(
         "currentUser",
         JSON.stringify({
-          id: userData.id,
-          name: userData.employeeName,
-          userName: userData.username,
-          // email: userData.email, // backend tidak menyediakan email
-          roleName: userData.roleName, // "ADMINISTRATOR", "LEAD", "EMPLOYEE"
-          roleDesc: userData.roleDesc,
+          id: profileData.id || profileData.employeeId || "",
+          name: profileData.employeeName || "User",
+          userName: profileData.username || profileData.userName || username,
+          roleName: profileData.roleName, 
+          roleDesc: profileData.roleDesc,
           token: userData.token, // Menyimpan token JWT
-          createdAt: userData.createdAt
+          createdAt: profileData.createdAt
         }),
       );
 
       // 3. Tentukan redirect berdasarkan role dari BE
       let targetRoute = "/dashboard-staff"; // default EMPLOYEE
-      const roleName = userData.roleName;
+      const roleName = profileData.roleName;
       if (roleName === "ADMINISTRATOR" || roleName === "ADMIN") {
         targetRoute = "/dashboard-admin";
-      } else if (roleName === "LEAD") {
+      } else if (roleName === "LEAD" || roleName === "HEAD") {
         targetRoute = "/dashboard-head";
+      } else if (roleName === "TECHNICIAN" || roleName === "TEKNISI") {
+        targetRoute = "/teknisi";
       }
 
       // 4. Tampilkan popup sukses lalu navigasi
@@ -72,7 +84,7 @@ export default function Login() {
     } catch (error: unknown) {
       const err = error as { response?: { data?: any } };
       let errorMsg = "";
-      
+
       if (err.response?.data) {
         if (typeof err.response.data === "string") {
           errorMsg = err.response.data;
@@ -89,28 +101,28 @@ export default function Login() {
       }
 
       const lowerMsg = String(errorMsg).toLowerCase();
-      
+
       // 1. Cek apabila error berhubungan dengan kata sandi/kredensial
       if (
-        lowerMsg.includes("password") || 
-        lowerMsg.includes("sandi") || 
-        lowerMsg.includes("kredensial") || 
+        lowerMsg.includes("password") ||
+        lowerMsg.includes("sandi") ||
+        lowerMsg.includes("kredensial") ||
         lowerMsg.includes("credential") ||
         lowerMsg.includes("bad") ||
         lowerMsg.includes("salah")
       ) {
         setPasswordError("password tidak sesuai dengan username");
-      } 
+      }
       // 2. Cek apabila error berhubungan dengan ketiadaan user
       else if (
-        lowerMsg.includes("username") || 
-        lowerMsg.includes("user") || 
+        lowerMsg.includes("username") ||
+        lowerMsg.includes("user") ||
         lowerMsg.includes("pengguna") ||
         lowerMsg.includes("ditemukan") ||
         lowerMsg.includes("found")
       ) {
         setUsernameError("username tidak sesuai dengan password");
-      } 
+      }
       // 3. Fallback jika response dari backend tidak terdeteksi kata kuncinya
       else {
         setErrorMessage(errorMsg);
@@ -315,11 +327,10 @@ export default function Login() {
                     }}
                     required
                     placeholder="Masukkan nama pengguna"
-                    className={`w-full h-[52px] px-5 rounded-full border bg-white/80 text-[14px] font-medium focus:outline-none focus:bg-white focus:ring-4 transition-all duration-300 shadow-sm ${
-                      usernameError 
-                        ? "border-red-400 text-red-600 focus:border-red-500 focus:ring-red-100/50" 
-                        : "border-slate-200/80 text-slate-700 focus:border-blue-400 focus:ring-blue-100/50"
-                    }`}
+                    className={`w-full h-[52px] px-5 rounded-full border bg-white/80 text-[14px] font-medium focus:outline-none focus:bg-white focus:ring-4 transition-all duration-300 shadow-sm ${usernameError
+                      ? "border-red-400 text-red-600 focus:border-red-500 focus:ring-red-100/50"
+                      : "border-slate-200/80 text-slate-700 focus:border-blue-400 focus:ring-blue-100/50"
+                      }`}
                   />
                 </div>
                 {usernameError && (
@@ -347,11 +358,10 @@ export default function Login() {
                     }}
                     required
                     placeholder="••••••••"
-                    className={`w-full h-[52px] px-5 rounded-full border bg-white/80 text-[14px] font-medium focus:outline-none focus:bg-white focus:ring-4 transition-all duration-300 shadow-sm pr-14 ${
-                      passwordError
-                        ? "border-red-400 text-red-600 focus:border-red-500 focus:ring-red-100/50"
-                        : "border-slate-200/80 text-slate-700 focus:border-blue-400 focus:ring-blue-100/50"
-                    }`}
+                    className={`w-full h-[52px] px-5 rounded-full border bg-white/80 text-[14px] font-medium focus:outline-none focus:bg-white focus:ring-4 transition-all duration-300 shadow-sm pr-14 ${passwordError
+                      ? "border-red-400 text-red-600 focus:border-red-500 focus:ring-red-100/50"
+                      : "border-slate-200/80 text-slate-700 focus:border-blue-400 focus:ring-blue-100/50"
+                      }`}
                   />
                   <EyeIcon
                     isVisible={showPassword}

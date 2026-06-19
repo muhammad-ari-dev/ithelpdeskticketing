@@ -1,5 +1,7 @@
 package com.juaracoding.ITHelpdeskTicketing.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.juaracoding.ITHelpdeskTicketing.util.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -18,6 +20,7 @@ public class Evidence extends BaseEntity {
 
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "TicketID", nullable = false)
+        @JsonIgnore
         private Ticket ticket;
     }
 

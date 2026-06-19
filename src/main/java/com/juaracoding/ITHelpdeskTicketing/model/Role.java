@@ -11,7 +11,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+
 public class Role extends BaseEntity {
 
     @Column(name = "RoleName", nullable = false, length = 64, unique = true)

@@ -9,17 +9,17 @@ import { authApi } from '../api/authApi';// Import authApi
 // KOMPONEN GELOMBANG BIRU
 // ============================================================
 const BlueWave = () => (
-    <div className="absolute bottom-0 left-0 w-full z-0 pointer-events-none overflow-hidden">
-        <svg viewBox="0 0 1440 170" className="w-full h-[130px]" preserveAspectRatio="none">
-            <defs>
-                <filter id="waveHeadShadow">
-                    <feDropShadow dx="0" dy="-6" stdDeviation="12" floodColor="#3B82F6" floodOpacity="0.15" />
-                </filter>
-            </defs>
-            <path fill="#3B82F6" filter="url(#waveHeadShadow)" d="M0,120 C240,170 480,60 720,110 C960,160 1180,50 1440,100 L1440,170 L0,170 Z" opacity="0.28" />
-            <path fill="#2563EB" d="M0,145 C180,110 360,165 540,135 C720,105 900,158 1080,125 C1200,105 1360,155 1440,142 L1440,170 L0,170 Z" opacity="0.42" />
-        </svg>
-    </div>
+  <div className="absolute bottom-0 left-0 w-full z-0 pointer-events-none overflow-hidden">
+    <svg viewBox="0 0 1440 170" className="w-full h-[130px]" preserveAspectRatio="none">
+      <defs>
+        <filter id="waveHeadShadow">
+          <feDropShadow dx="0" dy="-6" stdDeviation="12" floodColor="#3B82F6" floodOpacity="0.15" />
+        </filter>
+      </defs>
+      <path fill="#3B82F6" filter="url(#waveHeadShadow)" d="M0,120 C240,170 480,60 720,110 C960,160 1180,50 1440,100 L1440,170 L0,170 Z" opacity="0.28" />
+      <path fill="#2563EB" d="M0,145 C180,110 360,165 540,135 C720,105 900,158 1080,125 C1200,105 1360,155 1440,142 L1440,170 L0,170 Z" opacity="0.42" />
+    </svg>
+  </div>
 );
 
 // ============================================================
@@ -158,7 +158,7 @@ export default function TambahUser() {
       await authApi.registerEmployee(dataToSend);
       setNewUserName(formData.namaLengkap);
       setShowSuccessPopup(true);
-      
+
       // Reset form
       setFormData({
         namaLengkap: "",
@@ -203,11 +203,11 @@ export default function TambahUser() {
             <p className="text-xs font-semibold text-slate-400 mt-1 mb-6 text-center">
               Email konfirmasi telah dikirimkan.
             </p>
-            <button 
-                onClick={() => setShowSuccessPopup(false)}
-                className="w-full bg-[#22c55e] hover:bg-[#16a34a] text-white font-bold py-3 rounded-xl transition-all active:scale-95"
+            <button
+              onClick={() => setShowSuccessPopup(false)}
+              className="w-full bg-[#22c55e] hover:bg-[#16a34a] text-white font-bold py-3 rounded-xl transition-all active:scale-95"
             >
-                OK, Lanjutkan
+              OK, Lanjutkan
             </button>
           </div>
         </div>
@@ -228,11 +228,11 @@ export default function TambahUser() {
             <p className="text-sm font-bold text-rose-500 mt-2 text-center mb-6 max-w-xs">
               {errorMessage}
             </p>
-            <button 
-                onClick={() => setShowErrorPopup(false)}
-                className="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95"
+            <button
+              onClick={() => setShowErrorPopup(false)}
+              className="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95"
             >
-                Coba Lagi
+              Coba Lagi
             </button>
           </div>
         </div>
@@ -250,62 +250,62 @@ export default function TambahUser() {
       <div className={`fixed md:relative z-50 h-full ${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64 md:translate-x-0 md:w-20'} bg-gradient-to-b from-blue-600 via-blue-600 to-indigo-700 shadow-2xl transition-all duration-300 ease-in-out flex flex-col shrink-0 border-r border-blue-500/30`}>
 
         <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="hidden md:block absolute -right-3.5 top-8 bg-white text-slate-800 rounded-full p-1.5 shadow-md hover:scale-110 hover:text-blue-600 transition-all border border-slate-100 z-50"
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="hidden md:block absolute -right-3.5 top-8 bg-white text-slate-800 rounded-full p-1.5 shadow-md hover:scale-110 hover:text-blue-600 transition-all border border-slate-100 z-50"
         >
-            <svg className={`w-3.5 h-3.5 transition-transform duration-300 ${!isSidebarOpen && 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" />
-            </svg>
+          <svg className={`w-3.5 h-3.5 transition-transform duration-300 ${!isSidebarOpen && 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" />
+          </svg>
         </button>
 
         <div className="h-24 flex items-center justify-center border-b border-blue-500/30 mt-2 pb-4 px-3 relative overflow-hidden">
-            <div className={`flex items-center justify-start transition-all duration-300 ${isSidebarOpen ? 'w-full h-16' : 'w-12 h-12'}`}>
-                <img
-                    src={LogoImg}
-                    alt="Logo IT Helpdesk"
-                    className={`transition-all duration-300 origin-left drop-shadow-md filter brightness-110 max-w-none ${isSidebarOpen ? 'h-full object-contain scale-[2.9] ml-2' : 'h-full object-cover scale-[2.5] ml-1.5'}`}
-                />
-            </div>
+          <div className={`flex items-center justify-start transition-all duration-300 ${isSidebarOpen ? 'w-full h-16' : 'w-12 h-12'}`}>
+            <img
+              src={LogoImg}
+              alt="Logo IT Helpdesk"
+              className={`transition-all duration-300 origin-left drop-shadow-md filter brightness-110 max-w-none ${isSidebarOpen ? 'h-full object-contain scale-[2.9] ml-2' : 'h-full object-cover scale-[2.5] ml-1.5'}`}
+            />
+          </div>
         </div>
 
         <div className="flex-1 py-6 flex flex-col gap-2.5 px-3.5 overflow-y-auto">
-            <div
-                onClick={() => navigate('/dashboard-admin')}
-                className={`flex items-center cursor-pointer transition-all duration-300 group ${isSidebarOpen ? 'gap-3.5 px-4 py-3 rounded-xl' : 'justify-center w-12 h-12 rounded-xl mx-auto'} text-blue-100/80 hover:bg-white/10 hover:text-white`}
-            >
-                <svg className="w-5 h-5 shrink-0 group-hover:scale-105 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-                {isSidebarOpen && <span className="whitespace-nowrap text-[13px] tracking-wide uppercase font-bold">Dashboard</span>}
-            </div>
+          <div
+            onClick={() => navigate('/dashboard-admin')}
+            className={`flex items-center cursor-pointer transition-all duration-300 group ${isSidebarOpen ? 'gap-3.5 px-4 py-3 rounded-xl' : 'justify-center w-12 h-12 rounded-xl mx-auto'} text-blue-100/80 hover:bg-white/10 hover:text-white`}
+          >
+            <svg className="w-5 h-5 shrink-0 group-hover:scale-105 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+            {isSidebarOpen && <span className="whitespace-nowrap text-[13px] tracking-wide uppercase font-bold">Dashboard</span>}
+          </div>
 
-            <div
-                onClick={() => navigate('/profile')}
-                className={`flex items-center cursor-pointer transition-all duration-300 group ${isSidebarOpen ? 'gap-3.5 px-4 py-3 rounded-xl' : 'justify-center w-12 h-12 rounded-xl mx-auto'} text-blue-100/80 hover:bg-white/10 hover:text-white`}
-            >
-                <svg className="w-5 h-5 shrink-0 group-hover:scale-105 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                {isSidebarOpen && <span className="whitespace-nowrap text-[13px] tracking-wide uppercase font-bold">Profile</span>}
-            </div>
+          <div
+            onClick={() => navigate('/profile')}
+            className={`flex items-center cursor-pointer transition-all duration-300 group ${isSidebarOpen ? 'gap-3.5 px-4 py-3 rounded-xl' : 'justify-center w-12 h-12 rounded-xl mx-auto'} text-blue-100/80 hover:bg-white/10 hover:text-white`}
+          >
+            <svg className="w-5 h-5 shrink-0 group-hover:scale-105 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            {isSidebarOpen && <span className="whitespace-nowrap text-[13px] tracking-wide uppercase font-bold">Profile</span>}
+          </div>
 
-            <div
-                className={`flex items-center cursor-pointer transition-all duration-300 group ${isSidebarOpen ? 'gap-3.5 px-4 py-3 rounded-xl' : 'justify-center w-12 h-12 rounded-xl mx-auto'} bg-white/20 text-white border-l-[3.5px] border-white`}
-            >
-                <svg className="w-5 h-5 shrink-0 group-hover:scale-105 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                </svg>
-                {isSidebarOpen && <span className="whitespace-nowrap text-[13px] tracking-wide uppercase font-bold">Tambah User</span>}
-            </div>
-            
-            {/* Sign Out Button in Sidebar */}
-            <div
-                onClick={handleSignOut}
-                className="mt-auto flex items-center gap-3.5 text-blue-100/80 px-4 py-3 rounded-xl font-semibold cursor-pointer transition-all hover:bg-red-500/20 hover:text-red-100 group"
-            >
-                <svg className="w-5 h-5 shrink-0 group-hover:scale-105 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                <span className={`whitespace-nowrap text-[13px] tracking-wide transition-all duration-300 ${isSidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 hidden'}`}>SIGN OUT</span>
-            </div>
+          <div
+            className={`flex items-center cursor-pointer transition-all duration-300 group ${isSidebarOpen ? 'gap-3.5 px-4 py-3 rounded-xl' : 'justify-center w-12 h-12 rounded-xl mx-auto'} bg-white/20 text-white border-l-[3.5px] border-white`}
+          >
+            <svg className="w-5 h-5 shrink-0 group-hover:scale-105 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+            {isSidebarOpen && <span className="whitespace-nowrap text-[13px] tracking-wide uppercase font-bold">Tambah User</span>}
+          </div>
+
+          {/* Sign Out Button in Sidebar */}
+          <div
+            onClick={handleSignOut}
+            className="mt-auto flex items-center gap-3.5 text-blue-100/80 px-4 py-3 rounded-xl font-semibold cursor-pointer transition-all hover:bg-red-500/20 hover:text-red-100 group"
+          >
+            <svg className="w-5 h-5 shrink-0 group-hover:scale-105 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+            <span className={`whitespace-nowrap text-[13px] tracking-wide transition-all duration-300 ${isSidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 hidden'}`}>SIGN OUT</span>
+          </div>
         </div>
       </div>
 
@@ -416,7 +416,7 @@ export default function TambahUser() {
 
               {/* Info Admin Note */}
               <div className="bg-blue-50 border border-blue-200 rounded-2xl px-5 py-1 flex items-center gap-3 mb-6">
-              
+
               </div>
 
               {/* Form Card */}
@@ -527,7 +527,7 @@ export default function TambahUser() {
                     </p>
                   </div>
 
-                  
+
 
                   {/* Role */}
                   <div>
@@ -679,30 +679,30 @@ export default function TambahUser() {
                     className={`flex-1 text-white font-black text-[15px] py-4 rounded-2xl shadow-[0_8px_25px_rgba(34,197,94,0.35)] transition-all flex items-center justify-center gap-2.5 ${isSubmitting ? 'bg-emerald-400 cursor-not-allowed' : 'bg-[#22c55e] hover:bg-[#16a34a] active:scale-95'}`}
                   >
                     {isSubmitting ? (
-                        <>
-                            <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Memproses...
-                        </>
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Memproses...
+                      </>
                     ) : (
-                        <>
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2.5"
-                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                              />
-                            </svg>
-                            Registrasi Karyawan
-                        </>
+                      <>
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2.5"
+                            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                          />
+                        </svg>
+                        Registrasi Karyawan
+                      </>
                     )}
                   </button>
                   <button

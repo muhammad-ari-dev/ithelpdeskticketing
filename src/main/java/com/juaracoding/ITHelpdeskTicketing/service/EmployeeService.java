@@ -3,8 +3,9 @@ package com.juaracoding.ITHelpdeskTicketing.service;
 import com.juaracoding.ITHelpdeskTicketing.dto.response.EmployeesResponseDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.response.ProfileResponseDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.validation.ChangePasswordDTO;
-import com.juaracoding.ITHelpdeskTicketing.dto.response.DisableUserDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.response.EditEmployeeDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.response.LeadResponseDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.validation.UpdateEmployeeDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.validation.RegisDTO;
 import com.juaracoding.ITHelpdeskTicketing.handler.ResponseHandler;
 import com.juaracoding.ITHelpdeskTicketing.model.Employee;
@@ -20,17 +21,17 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class EmployeeService {
@@ -52,8 +53,8 @@ public class EmployeeService {
 
     public ResponseEntity<Object> getEmployees(HttpServletRequest request){
 
-        // 1. Get all employees
-        List<Employee> employees = employeeRepo.findAll();
+        // 1. Get all employees, with employees without a lead first
+        List<Employee> employees = employeeRepo.findAllOrphanFirst();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH);
 
         // 2. Map list elements to DTOs correctly using Streams
@@ -62,9 +63,8 @@ public class EmployeeService {
 
             dto.setId(employee.getId());
             dto.setStatus(employee.getAccountStatus());
-            dto.setCreatedAt(employee.getCreatedAt().format(formatter));
-
             // Format Updated Date conditionally
+            dto.setCreatedAt(employee.getCreatedAt().format(formatter));
             if ("INACTIVE".equals(employee.getAccountStatus()) && employee.getUpdatedAt() != null) {
                 dto.setUpdatedAt(employee.getUpdatedAt().format(formatter));
             } else {
@@ -280,6 +280,76 @@ public class EmployeeService {
 
     }
 
+    @Transactional
+    public ResponseEntity<Object> editEmployee(UpdateEmployeeDTO updateEmployeeDTO, HttpServletRequest request){
+
+        UUID employeeId = UUID.fromString(updateEmployeeDTO.getEmployeeId());
+        Employee employee = employeeRepo.findById(employeeId)
+                .orElseThrow(() -> new RuntimeException(ConstantMessage.USER_NOT_FOUND));
+
+        Role previousRole = employee.getRole();
+        Role updatedRole = roleRepo.findByRoleName(updateEmployeeDTO.getRoleName())
+                .orElseThrow(() -> new RuntimeException(ConstantMessage.NOT_FOUND));
+
+        employee.setEmployeeName(updateEmployeeDTO.getEmployeeName());
+        employee.setEmail(updateEmployeeDTO.getEmail());
+        employee.setNoHp(updateEmployeeDTO.getNoHp());
+        employee.setRole(updatedRole);
+        employee.setUpdatedBy("ADMIN");
+
+        if ("LEAD".equals(previousRole.getRoleName()) && !"LEAD".equals(updatedRole.getRoleName())) {
+            List<Employee> staffList = employeeRepo.findByLead(employee);
+            for (Employee staff : staffList) {
+                staff.setLead(null);
+            }
+            employeeRepo.saveAll(staffList);
+        }
+
+        if ("LEAD".equals(updatedRole.getRoleName()) || "ADMINISTRATOR".equals(updatedRole.getRoleName())) {
+            employee.setLead(null);
+        } else {
+            if (updateEmployeeDTO.getLeadID() == null || updateEmployeeDTO.getLeadID().isBlank()) {
+                employee.setLead(null);
+            } else {
+                UUID leadUuid = UUID.fromString(updateEmployeeDTO.getLeadID());
+                Employee lead = employeeRepo.findById(leadUuid)
+                        .orElseThrow(() -> new RuntimeException(ConstantMessage.NOT_FOUND));
+                employee.setLead(lead);
+            }
+        }
+
+        employeeRepo.save(employee);
+
+        if ("LEAD".equals(updatedRole.getRoleName())) {
+            Set<String> selectedStaffIds = new HashSet<>(
+                    updateEmployeeDTO.getStaffIds() == null ? List.of() : updateEmployeeDTO.getStaffIds()
+            );
+
+            List<Employee> currentStaffList = employeeRepo.findByLead(employee);
+            for (Employee staff : currentStaffList) {
+                if (!selectedStaffIds.contains(staff.getId().toString())) {
+                    staff.setLead(null);
+                }
+            }
+            employeeRepo.saveAll(currentStaffList);
+
+            for (String staffId : selectedStaffIds) {
+                UUID staffUuid = UUID.fromString(staffId);
+                if (staffUuid.equals(employee.getId())) {
+                    continue;
+                }
+
+                Employee staff = employeeRepo.findById(staffUuid)
+                        .orElseThrow(() -> new RuntimeException(ConstantMessage.NOT_FOUND));
+                staff.setLead(employee);
+                employeeRepo.save(staff);
+            }
+        }
+
+        return new ResponseHandler()
+                .handleResponse(ConstantMessage.SUCCESS_UPDATE, HttpStatus.OK, updateEmployeeDTO, request);
+    }
+
     // =========================================================
     // FITUR 4: DISABLE USER (oleh Admin)
     // =========================================================
@@ -304,11 +374,11 @@ public class EmployeeService {
      * @Transactional → Rollback otomatis jika ada error saat simpan
      */
     @Transactional
-    public String disableUser(DisableUserDTO dto) {
+    public ResponseEntity<Object> disableUser(EditEmployeeDTO disableUserDTO, HttpServletRequest request) {
 
         // Parse String UUID → tipe UUID
         // Aman karena sudah divalidasi @Pattern di DTO sebelum sampai sini
-        UUID employeeId = UUID.fromString(dto.getEmployeeId());
+        UUID employeeId = UUID.fromString(disableUserDTO.getEmployeeId());
 
         // Cari employee di DB berdasarkan ID
         Employee employee = employeeRepo.findById(employeeId)
@@ -316,7 +386,16 @@ public class EmployeeService {
 
         // Cek apakah akun sudah tidak aktif — tidak perlu proses dua kali
         if ("INACTIVE".equals(employee.getAccountStatus())) {
-            return ConstantMessage.ALREADY_INACTIVE;
+            return new ResponseHandler()
+                    .handleResponse(ConstantMessage.ALREADY_INACTIVE, HttpStatus.BAD_REQUEST, null, request);
+        }
+
+        if("LEAD".equals(employee.getRole().getRoleName())){
+            List<Employee> staffList = employeeRepo.findByLead(employee);
+            for (Employee staff : staffList) {
+                staff.setLead(null);
+            }
+            employeeRepo.saveAll(staffList);
         }
 
         // Ubah status → INACTIVE
@@ -324,7 +403,8 @@ public class EmployeeService {
         employee.setUpdatedBy("ADMIN");
         employeeRepo.save(employee);
 
-        return ConstantMessage.SUCCESS_DISABLE_USER + ": " + employee.getEmployeeName();
+        return new ResponseHandler()
+                .handleResponse(ConstantMessage.SUCCESS_DISABLE_USER, HttpStatus.OK, disableUserDTO, request);
     }
 
 
@@ -357,11 +437,11 @@ public class EmployeeService {
      * @Transactional → Rollback otomatis jika gagal kirim email
      */
     @Transactional
-    public String resetPassUser(DisableUserDTO dto) {
+    public ResponseEntity<Object> resetPassUser(EditEmployeeDTO resetPasswordDTO, HttpServletRequest request) {
         // Pakai DisableUserDTO yang sama karena sama-sama hanya butuh employeeId
         // Tidak perlu buat DTO baru yang isinya sama persis
 
-        UUID employeeId = UUID.fromString(dto.getEmployeeId());
+        UUID employeeId = UUID.fromString(resetPasswordDTO.getEmployeeId());
 
         // Cari employee di DB
         Employee employee = employeeRepo.findById(employeeId)
@@ -377,7 +457,7 @@ public class EmployeeService {
         String magicToken = UUID.randomUUID().toString();
         employee.setMagicToken(magicToken);
 
-        employee.setMagicTokenExpiryAt(LocalDateTime.now().plusDays(1));
+        employee.setMagicTokenExpiryAt(LocalDateTime.now().plusDays(7));
 
         /**
          * Ubah status ke PENDING
@@ -395,6 +475,9 @@ public class EmployeeService {
         // Pakai method yang sama dengan saat register
         emailService.sendMagicLink(employee.getEmail(), magicToken);
 
-        return ConstantMessage.SUCCESS_RESET_PASS + ": " + employee.getEmail();
+        return new ResponseHandler()
+                .handleResponse(ConstantMessage.SUCCESS_RESET_PASS, HttpStatus.OK, resetPasswordDTO, request);
     }
 }
+
+

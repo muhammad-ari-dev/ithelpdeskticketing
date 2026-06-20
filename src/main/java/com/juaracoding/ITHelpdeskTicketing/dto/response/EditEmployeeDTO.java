@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 @Data
-public class DisableUserDTO {
+public class EditEmployeeDTO {
 
     /**
      * ID employee yang akan di-disable, dikirim dalam format UUID.

@@ -1,8 +1,9 @@
 package com.juaracoding.ITHelpdeskTicketing.controller;
 
 import com.juaracoding.ITHelpdeskTicketing.dto.validation.ChangePasswordDTO;
-import com.juaracoding.ITHelpdeskTicketing.dto.response.DisableUserDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.response.EditEmployeeDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.validation.RegisDTO;
+import com.juaracoding.ITHelpdeskTicketing.dto.validation.UpdateEmployeeDTO;
 import com.juaracoding.ITHelpdeskTicketing.service.EmployeeService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
@@ -92,6 +93,14 @@ public class EmployeeController {
             return employeeService.registerEmployee(regisDTO, request);
     }
 
+    @PatchMapping("/edit-employee")
+    @SecurityRequirement(name = "helpdesk-api")
+    public ResponseEntity<Object> editEmployee(
+            @Valid @RequestBody UpdateEmployeeDTO updateEmployeeDTO,
+            HttpServletRequest request){
+        return employeeService.editEmployee(updateEmployeeDTO, request);
+    }
+
     // =========================================================
     // ENDPOINT BARU — TASK ARI
     // =========================================================
@@ -118,13 +127,10 @@ public class EmployeeController {
      */
     @PatchMapping("/disable")
     @SecurityRequirement(name = "helpdesk-api")
-    public ResponseEntity<?> disableUser(@Valid @RequestBody DisableUserDTO dto) {
-        try {
-            String result = employeeService.disableUser(dto);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Object> disableUser(
+            @Valid @RequestBody EditEmployeeDTO disableUserDTO,
+            HttpServletRequest request) {
+            return employeeService.disableUser(disableUserDTO, request);
     }
 
     /**
@@ -151,12 +157,9 @@ public class EmployeeController {
      */
     @PatchMapping("/reset-password")
     @SecurityRequirement(name = "helpdesk-api")
-    public ResponseEntity<?> resetPassUser(@Valid @RequestBody DisableUserDTO dto) {
-        try {
-            String result = employeeService.resetPassUser(dto);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Object> resetPassUser(
+            @Valid @RequestBody EditEmployeeDTO resetPasswordDTO,
+            HttpServletRequest request) {
+        return employeeService.resetPassUser(resetPasswordDTO, request);
     }
 }

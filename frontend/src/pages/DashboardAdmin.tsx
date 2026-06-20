@@ -26,6 +26,12 @@ const normalizeRoleName = (roleName?: string): User['roleName'] => {
     return 'Staff IT';
 };
 
+const toBackendRoleName = (roleName: User['roleName']): 'ADMINISTRATOR' | 'LEAD' | 'EMPLOYEE' => {
+    if (roleName === 'Head IT') return 'LEAD';
+    if (roleName === 'ADMIN') return 'ADMINISTRATOR';
+    return 'EMPLOYEE';
+};
+
 const normalizeStatus = (accountStatus?: string, updatedAt?: string): User['status'] => {
     if (accountStatus?.toUpperCase() === 'INACTIVE' || updatedAt) return 'Non Aktif';
     return 'Aktif';
@@ -74,7 +80,7 @@ const BlueWave = () => (
 
 export default function DashboardAdmin() {
     const navigate = useNavigate();
-    const { users: contextUsers, removeUser, updateUser, getStaffs } = useUserContext();
+    const { users: contextUsers, removeUser, updateUser } = useUserContext();
     const contextUsersRef = useRef(contextUsers);
 
     // ================= STATE =================
@@ -88,6 +94,9 @@ export default function DashboardAdmin() {
     const [selectedUser, setSelectedUser] = useState<(User & { leaderName?: string }) | null>(null);
     const [deleteConfirmUser, setDeleteConfirmUser] = useState<(User & { leaderName?: string }) | null>(null);
     const [alertMessage, setAlertMessage] = useState<string | null>(null);
+    const [resetPasswordUserId, setResetPasswordUserId] = useState<string | null>(null);
+    const [disableUserId, setDisableUserId] = useState<string | null>(null);
+    const [isSavingEdit, setIsSavingEdit] = useState(false);
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -95,7 +104,7 @@ export default function DashboardAdmin() {
 
     // Edit State
     const [editUser, setEditUser] = useState<User | null>(null);
-    const [editFormData, setEditFormData] = useState<{ name: string, username: string, email: string, phone: string, roleName: string, leaderId?: string | null, staffIds?: string[] }>({ name: '', username: '', email: '', phone: '', roleName: '', leaderId: null, staffIds: [] });
+    const [editFormData, setEditFormData] = useState<{ name: string, username: string, email: string, phone: string, roleName: User['roleName'], leaderId?: string | null, staffIds?: string[] }>({ name: '', username: '', email: '', phone: '', roleName: 'Staff IT', leaderId: null, staffIds: [] });
 
     // Session dari localStorage
     const sessionRaw = localStorage.getItem('currentUser');
@@ -109,7 +118,7 @@ export default function DashboardAdmin() {
 
             try {
                 const response = await authApi.getEmployees();
-                const employeeList = Array.isArray(response) ? response : response?.data ?? [];
+                const employeeList: BackendEmployee[] = Array.isArray(response) ? response : response?.data ?? [];
                 
                 let mappedUsers = employeeList.map(mapEmployeeToUser);
                 // Rekonstruksi staffIds untuk Head IT berdasarkan leaderId dari Staff IT
@@ -158,11 +167,143 @@ export default function DashboardAdmin() {
         setDeleteConfirmUser(null);
     };
 
-    const handleSaveEdit = (e: React.FormEvent) => {
+    const getApiErrorMessage = (error: unknown, fallback: string) => {
+        if (typeof error === 'object' && error !== null && 'response' in error) {
+            const response = (error as { response?: { data?: { message?: string } } }).response;
+            return response?.data?.message || fallback;
+        }
+        return fallback;
+    };
+
+    const handleResetPassword = async (user: User) => {
+        if (String(user.id) === String(currentUser.id)) {
+            setAlertMessage('Keamanan Terjaga: Anda tidak diperbolehkan mereset password akun Admin Anda sendiri!');
+            return;
+        }
+
+        setResetPasswordUserId(String(user.id));
+
+        try {
+            const response = await authApi.resetPassword({ employeeId: String(user.id) });
+            setAlertMessage(response?.message || `Password ${user.name} berhasil direset. Magic link sudah dikirim ke email karyawan.`);
+        } catch (error) {
+            console.error('[resetPassword] error:', error);
+            setAlertMessage(getApiErrorMessage(error, 'Gagal mereset password. Silakan coba lagi.'));
+        } finally {
+            setResetPasswordUserId(null);
+        }
+    };
+
+    const handleDisableUser = async (user: User & { leaderName?: string }) => {
+        if (String(user.id) === String(currentUser.id)) {
+            setAlertMessage('Keamanan Terjaga: Anda tidak diperbolehkan menonaktifkan akun Admin Anda sendiri!');
+            return;
+        }
+
+        if (user.status === 'Non Aktif') {
+            setAlertMessage('Akun ini sudah dalam kondisi Non Aktif.');
+            return;
+        }
+
+        setDisableUserId(String(user.id));
+
+        try {
+            const response = await authApi.disableUser({ employeeId: String(user.id) });
+            const inactiveDate = new Date().toISOString();
+            const disabledUser = {
+                ...user,
+                status: 'Non Aktif' as const,
+                inactiveDate,
+                leaderId: null,
+                leaderName: undefined,
+                staffIds: [],
+            };
+
+            setUsers(prev => prev.map(item => {
+                if (String(item.id) === String(user.id)) {
+                    return disabledUser;
+                }
+                if (String(item.leaderId) === String(user.id)) {
+                    return { ...item, leaderId: null, leaderName: undefined };
+                }
+                if (item.staffIds?.includes(String(user.id))) {
+                    return { ...item, staffIds: item.staffIds.filter(id => id !== String(user.id)) };
+                }
+                return item;
+            }));
+            setSelectedUser(prev => prev && String(prev.id) === String(user.id) ? disabledUser : prev);
+            setAlertMessage(response?.message || `${user.name} berhasil dinonaktifkan.`);
+        } catch (error) {
+            console.error('[disableUser] error:', error);
+            setAlertMessage(getApiErrorMessage(error, 'Gagal menonaktifkan akun. Silakan coba lagi.'));
+        } finally {
+            setDisableUserId(null);
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        }
+    };
+
+    const handleSaveEdit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editUser) return;
-        updateUser(editUser.id, editFormData);
-        setEditUser(null);
+
+        setIsSavingEdit(true);
+
+        try {
+            const selectedStaffIds = (editFormData.staffIds || []).filter(id => String(id) !== String(editUser.id));
+            const response = await authApi.editEmployee({
+                employeeId: String(editUser.id),
+                employeeName: editFormData.name,
+                email: editFormData.email,
+                noHp: editFormData.phone,
+                roleName: toBackendRoleName(editFormData.roleName),
+                leadID: editFormData.roleName === 'Staff IT' ? editFormData.leaderId || '' : '',
+                staffIds: editFormData.roleName === 'Head IT' ? selectedStaffIds : [],
+            });
+
+            const updatedUser = {
+                ...editUser,
+                ...editFormData,
+                roleDesc: editFormData.roleName,
+                leaderId: editFormData.roleName === 'Staff IT' ? editFormData.leaderId || null : null,
+                leaderName: editFormData.roleName === 'Staff IT'
+                    ? users.find(u => String(u.id) === String(editFormData.leaderId))?.name
+                    : undefined,
+                staffIds: editFormData.roleName === 'Head IT' ? selectedStaffIds : [],
+            };
+
+            updateUser(editUser.id, updatedUser);
+            setUsers(prev => prev.map(user => {
+                if (String(user.id) === String(editUser.id)) {
+                    return updatedUser;
+                }
+
+                if (editUser.roleName === 'Head IT' && editFormData.roleName !== 'Head IT' && String(user.leaderId) === String(editUser.id)) {
+                    return { ...user, leaderId: null, leaderName: undefined };
+                }
+
+                if (editFormData.roleName === 'Head IT') {
+                    const isSelectedStaff = selectedStaffIds.includes(String(user.id));
+                    if (isSelectedStaff) {
+                        return { ...user, leaderId: String(editUser.id), leaderName: editFormData.name };
+                    }
+                    if (String(user.leaderId) === String(editUser.id)) {
+                        return { ...user, leaderId: null, leaderName: undefined };
+                    }
+                }
+
+                return user;
+            }));
+            setSelectedUser(prev => prev && String(prev.id) === String(editUser.id) ? updatedUser : prev);
+            setEditUser(null);
+            setAlertMessage(response?.message || `${editFormData.name} berhasil diperbarui.`);
+        } catch (error) {
+            console.error('[editEmployee] error:', error);
+            setAlertMessage(getApiErrorMessage(error, 'Gagal memperbarui data karyawan. Silakan coba lagi.'));
+        } finally {
+            setIsSavingEdit(false);
+        }
     };
 
     const handleSignOut = () => {
@@ -452,7 +593,7 @@ export default function DashboardAdmin() {
                                         >
                                             Lihat
                                         </button>
-
+                                        {user.status === 'Aktif' && (
                                         <button
                                             type="button"
                                             onClick={() => openEditModal(user)}
@@ -463,7 +604,7 @@ export default function DashboardAdmin() {
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                             </svg>
                                         </button>
-
+                                        )}
                                         {/* <button
                                             type="button"
                                             onClick={(e) => {
@@ -479,7 +620,7 @@ export default function DashboardAdmin() {
                                             </svg>
                                         </button> */}
 
-                                        {user.status === 'Non Aktif' && (
+                                        {/* {user.status === 'Non Aktif' && (
                                             <button
                                                 type="button"
                                                 onClick={(e) => {
@@ -497,20 +638,34 @@ export default function DashboardAdmin() {
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                 </svg>
                                             </button>
-                                        )}
+                                        )} */}
                                     </div>
                                     <div className="mt-5 flex items-center justify-center gap-2 w-full">
+                                        {user.status === 'Aktif' && (
                                         <button
-                                            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-[11px] font-bold text-white shadow-sm transition-all active:scale-95 cursor-pointer bg-[#3B82F6] hover:bg-[#2563EB]`}
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleResetPassword(user);
+                                            }}
+                                            disabled={resetPasswordUserId === String(user.id)}
+                                            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-[11px] font-bold text-white shadow-sm transition-all active:scale-95 bg-[#3B82F6] hover:bg-[#2563EB] disabled:cursor-wait disabled:opacity-70`}
                                             title={'Reset Password'}
                                         >
-                                            Reset Password
+                                            {resetPasswordUserId === String(user.id) ? 'Mengirim...' : 'Reset Password'}
                                         </button>
+                                        )}
                                         <button
-                                            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-[11px] font-bold text-white shadow-sm transition-all active:scale-95 cursor-pointer bg-rose-500 hover:bg-rose-600`}
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDisableUser(user);
+                                            }}
+                                            disabled={disableUserId === String(user.id) || user.status === 'Non Aktif'}
+                                            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-[11px] font-bold text-white shadow-sm transition-all active:scale-95 bg-rose-500 hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-rose-500`}
                                             title={'Non Aktifkan'}
                                         >
-                                            Non Aktifkan
+                                            {disableUserId === String(user.id) ? 'Memproses...' : user.status === 'Non Aktif' ? 'Non Aktif' : 'Non Aktifkan'}
                                         </button>
                                     </div>
                                 </div>
@@ -773,7 +928,7 @@ export default function DashboardAdmin() {
                                     <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Role</label>
                                     <select
                                         value={editFormData.roleName}
-                                        onChange={(e) => setEditFormData({ ...editFormData, roleName: e.target.value })}
+                                        onChange={(e) => setEditFormData({ ...editFormData, roleName: e.target.value as User['roleName'] })}
                                         className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold text-slate-700 outline-none focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all appearance-none cursor-pointer"
                                     >
                                         <option value="Staff IT">Staff IT</option>
@@ -808,7 +963,7 @@ export default function DashboardAdmin() {
                                 <div>
                                     <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Leader (Head IT)</label>
                                     <div className="w-full bg-slate-100 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold text-slate-500">
-                                        {editFormData.leaderId ? (users.find(u => String(u.id) === String(editFormData.leaderId))?.name || (editUser && 'leaderName' in editUser ? editUser.leaderName : null) || 'Terhubung') : 'Belum Ada Leader'}
+                                        {editFormData.leaderId ? (users.find(u => String(u.id) === String(editFormData.leaderId))?.name || 'Terhubung') : 'Belum Ada Leader'}
                                     </div>
                                 </div>
                             )}
@@ -823,14 +978,17 @@ export default function DashboardAdmin() {
                                             <svg className="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" /></svg>
                                         </summary>
                                         <div className="p-4 border-t border-slate-200 max-h-40 overflow-y-auto space-y-2.5 bg-white rounded-b-2xl">
-                                            {users.filter(u => u.roleName === 'Staff IT').filter(s => s.status === 'Aktif' || editFormData.staffIds?.includes(String(s.id))).length === 0 ? (
+                                            {users
+                                                .filter(u => u.roleName === 'Staff IT' && String(u.id) !== String(editUser.id))
+                                                .filter(s => s.status === 'Aktif' || editFormData.staffIds?.includes(String(s.id))).length === 0 ? (
                                                 <p className="text-xs text-slate-400 italic text-center py-2">Tidak ada Staff IT Aktif tersedia.</p>
                                             ) : (
-                                                users.filter(u => u.roleName === 'Staff IT')
+                                                users
+                                                    .filter(u => u.roleName === 'Staff IT' && String(u.id) !== String(editUser.id))
                                                     .filter(s => s.status === 'Aktif' || editFormData.staffIds?.includes(String(s.id)))
                                                     .map(staff => {
                                                         const isSelected = editFormData.staffIds?.includes(String(staff.id));
-                                                        const isOwnedByOther = staff.leaderId && staff.leaderId !== String(editUser.id);
+                                                        const isOwnedByOther = Boolean(staff.leaderId && staff.leaderId !== String(editUser.id));
                                                         return (
                                                             <label key={staff.id} className={`flex items-center gap-3 ${isOwnedByOther && !isSelected ? 'cursor-not-allowed opacity-60' : 'cursor-pointer group/item'}`}>
                                                                 <div className="relative flex items-center">
@@ -874,16 +1032,18 @@ export default function DashboardAdmin() {
                                 <button
                                     type="button"
                                     onClick={() => setEditUser(null)}
-                                    className="w-1/3 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-all text-sm"
+                                    disabled={isSavingEdit}
+                                    className="w-1/3 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-all text-sm disabled:cursor-not-allowed disabled:opacity-70"
                                 >
                                     Batal
                                 </button>
                                 <button
                                     type="submit"
-                                    className="w-2/3 py-3 rounded-2xl bg-indigo-500 hover:bg-indigo-600 text-white font-bold transition-all shadow-[0_8px_20px_rgba(99,102,241,0.25)] text-sm flex items-center justify-center gap-2"
+                                    disabled={isSavingEdit}
+                                    className="w-2/3 py-3 rounded-2xl bg-indigo-500 hover:bg-indigo-600 text-white font-bold transition-all shadow-[0_8px_20px_rgba(99,102,241,0.25)] text-sm flex items-center justify-center gap-2 disabled:cursor-wait disabled:opacity-70"
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
-                                    Simpan Perubahan
+                                    {isSavingEdit ? 'Menyimpan...' : 'Simpan Perubahan'}
                                 </button>
                             </div>
                         </form>

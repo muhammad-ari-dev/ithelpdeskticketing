@@ -2,6 +2,7 @@ package com.juaracoding.ITHelpdeskTicketing.repository;
 
 import com.juaracoding.ITHelpdeskTicketing.model.Employee;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
@@ -17,4 +18,13 @@ public interface EmployeeRepo extends JpaRepository<Employee, UUID> {
 
         boolean existsByUserName(String userName);
         boolean existsByEmail(String email);
+
+        @Query("""
+                SELECT e FROM Employee e
+                ORDER BY
+                    CASE WHEN e.lead IS NULL THEN 0 ELSE 1 END,
+                    e.employeeName ASC
+                """)
+        List<Employee> findAllOrphanFirst();
+        List<Employee> findByLead(Employee lead);
 }

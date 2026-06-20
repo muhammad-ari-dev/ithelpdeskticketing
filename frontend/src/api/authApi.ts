@@ -55,4 +55,27 @@ export const authApi = {
     const response = await axiosClient.patch("/api/employee/change-password", data);
     return response.data;
   },
+
+  resetPassword: async (data: { employeeId: string }) => {
+    const response = await axiosClient.patch("/api/employee/reset-password", data);
+    return response.data;
+  },
+
+  disableUser: async (data: { employeeId: string }) => {
+    const response = await axiosClient.patch("/api/employee/disable", data);
+    return response.data;
+  },
+
+  editEmployee: async (data: {
+    employeeId: string;
+    employeeName: string;
+    email: string;
+    noHp: string;
+    roleName: "ADMINISTRATOR" | "LEAD" | "EMPLOYEE";
+    leadID?: string;
+    staffIds?: string[];
+  }) => {
+    const response = await axiosClient.patch("/api/employee/edit-employee", data);
+    return response.data;
+  },
 };

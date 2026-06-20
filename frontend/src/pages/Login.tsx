@@ -111,7 +111,7 @@ export default function Login() {
         lowerMsg.includes("bad") ||
         lowerMsg.includes("salah")
       ) {
-        setPasswordError("password tidak sesuai dengan username");
+        setPasswordError("Username dan password tidak cocok. Silakan coba lagi.");
       }
       // 2. Cek apabila error berhubungan dengan ketiadaan user
       else if (
@@ -121,7 +121,7 @@ export default function Login() {
         lowerMsg.includes("ditemukan") ||
         lowerMsg.includes("found")
       ) {
-        setUsernameError("username tidak sesuai dengan password");
+        setUsernameError("Username tidak ditemukan. Silakan periksa kembali.");
       }
       // 3. Fallback jika response dari backend tidak terdeteksi kata kuncinya
       else {

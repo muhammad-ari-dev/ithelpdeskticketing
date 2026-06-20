@@ -334,20 +334,18 @@ export default function TambahUser() {
               />
             </svg>
           </button>
-          <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-black uppercase tracking-widest text-[#3B82F6]">
-                Welcome Back
-              </p>
-              <p className="text-sm font-extrabold text-slate-800">
-                {sessionUser.username}
-              </p>
-            </div>
-            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shrink-0 shadow-md">
-              <span className="text-[#3B82F6] font-black text-sm">
-                {sessionUser.username?.charAt(0)?.toUpperCase()}
-              </span>
-            </div>
+          <div className="flex items-center gap-3 bg-white hover:bg-blue-50/50 py-1.5 px-3 rounded-full border border-slate-200/80 cursor-pointer shadow-sm hover:shadow transition-all duration-300" onClick={() => navigate('/profile')}>
+              <div className="text-right hidden sm:block">
+                  <p className="text-slate-500 font-bold text-xs leading-none">
+                      {sessionUser?.userName || sessionUser?.username}
+                  </p>
+                  <p className="text-blue-500 text-[10px] font-bold mt-1 leading-none">
+                      {sessionUser?.roleName || "Administrator"}
+                  </p>
+              </div>
+              <div className="w-8 h-8 bg-blue-600/90 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-inner">
+                  {(sessionUser?.employeeName || sessionUser?.name || sessionUser?.userName || sessionUser?.username || "U").charAt(0).toUpperCase()}
+              </div>
           </div>
         </div>
 
@@ -367,17 +365,17 @@ export default function TambahUser() {
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <h3 className="text-white font-black text-[15px] leading-tight">
-                  {sessionUser.username}
-                </h3>
-                <p className="text-blue-100 font-bold text-[11px]">Admin</p>
+            <div className="flex items-center gap-3 bg-white hover:bg-blue-50/50 py-1.5 px-3 rounded-full border border-slate-200/80 cursor-pointer shadow-sm hover:shadow transition-all duration-300" onClick={() => navigate('/profile')}>
+              <div className="text-right hidden sm:block">
+                  <p className="text-slate-500 font-bold text-xs leading-none">
+                      {sessionUser?.userName || sessionUser?.username}
+                  </p>
+                  <p className="text-blue-500 text-[10px] font-bold mt-1 leading-none">
+                      {sessionUser?.roleName || "Administrator"}
+                  </p>
               </div>
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center border-2 border-white/40 shadow-lg">
-                <span className="text-white font-black text-sm">
-                  {sessionUser.username?.charAt(0)?.toUpperCase()}
-                </span>
+              <div className="w-8 h-8 bg-blue-600/90 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-inner">
+                  {(sessionUser?.employeeName || sessionUser?.name || sessionUser?.userName || sessionUser?.username || "U").charAt(0).toUpperCase()}
               </div>
             </div>
           </div>

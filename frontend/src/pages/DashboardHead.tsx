@@ -350,11 +350,8 @@ export default function DashboardHead() {
 
           <div
             className="flex items-center gap-3 bg-white hover:bg-blue-50/50 py-1.5 px-3 rounded-full border border-slate-200/80 cursor-pointer shadow-sm hover:shadow transition-all duration-300"
-            onClick={() => {
-              localStorage.removeItem("currentUser");
-              navigate("/login");
-            }}
-            title="Sign Out"
+            onClick={() => navigate("/profile")}
+            title="Profile"
           >
             <div className="text-right hidden sm:block">
               <p className="text-slate-500 font-bold text-xs leading-none">

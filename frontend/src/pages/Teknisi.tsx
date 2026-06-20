@@ -154,8 +154,8 @@ export default function Teknisi() {
                             key={idx}
                             onClick={() => navigate(item.path)}
                             className={`flex items-center gap-3.5 px-4 py-3 rounded-xl cursor-pointer transition-all group ${item.active
-                                    ? "bg-white/20 text-white border-l-[3.5px] border-white font-bold hover:bg-white/25"
-                                    : "text-blue-100/80 font-semibold hover:bg-white/10 hover:text-white"
+                                ? "bg-white/20 text-white border-l-[3.5px] border-white font-bold hover:bg-white/25"
+                                : "text-blue-100/80 font-semibold hover:bg-white/10 hover:text-white"
                                 }`}
                         >
                             <svg className={`w-5 h-5 shrink-0 transition-transform ${item.active ? 'group-hover:scale-105' : 'group-hover:scale-105 text-blue-200/80 group-hover:text-white'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,11 +254,8 @@ export default function Teknisi() {
                         {/* User Profile */}
                         <div
                             className="flex items-center gap-3 bg-white hover:bg-blue-50/50 py-1.5 px-3 rounded-full border border-slate-200/80 cursor-pointer shadow-sm hover:shadow transition-all duration-300"
-                            onClick={() => {
-                                localStorage.removeItem("currentUser");
-                                navigate("/login");
-                            }}
-                            title="Sign Out"
+                            onClick={() => navigate('/profile')}
+                            title="Profile"
                         >
                             <div className="text-right hidden sm:block">
                                 <p className="text-slate-500 font-bold text-xs leading-none">

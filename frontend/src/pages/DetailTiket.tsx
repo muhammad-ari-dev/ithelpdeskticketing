@@ -110,6 +110,7 @@ export default function DetailTiket() {
     // ================= STATE & DATA =================
     const [isEditing, setIsEditing] = useState(false);
     const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
     // Ambil data user yang sedang login dari localStorage
     const sessionRaw = localStorage.getItem('currentUser');
@@ -121,7 +122,8 @@ export default function DetailTiket() {
     const [ticketData, setTicketData] = useState({
         id: passedData?.id || '',
         noTask: passedData?.id || '005',
-        teknisi: passedData?.tech || 'Fadlan Jamirudin',
+        namaTiket: passedData?.ticketName || passedData?.task || 'Lepas Kabel Jaringan',
+        teknisi: passedData?.assignedEmployeeName || passedData?.tech || 'Belum diatur',
         deadline: passedData?.date || 'Belum diatur', 
         createdAt: passedData?.createdAt || passedData?.date || 'Belum diatur',
         kategori: passedData?.priority || 'HIGH',
@@ -336,11 +338,11 @@ export default function DetailTiket() {
                                 {/* Kolom Kiri */}
                                 <div className="space-y-6">
                                     <div>
-                                        <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">No Task</label>
+                                        <label className="block text-[12px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nama Tiket</label>
                                         <input
                                             type="text"
-                                            value={ticketData.noTask}
-                                            onChange={(e) => setTicketData({ ...ticketData, noTask: e.target.value })}
+                                            value={ticketData.namaTiket}
+                                            onChange={(e) => setTicketData({ ...ticketData, namaTiket: e.target.value })}
                                             required
                                             readOnly
                                             className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3 text-slate-500 font-bold text-[14px] shadow-sm outline-none transition-all cursor-not-allowed"
@@ -454,8 +456,10 @@ export default function DetailTiket() {
 
                             {/* Kiri: Avatar Teknisi */}
                             <div className="flex flex-col items-center shrink-0 w-[180px]">
-                                <div className="w-36 h-36 rounded-full border-4 border-slate-50 shadow-xl overflow-hidden bg-slate-200 mb-5 relative group">
-                                    <img src={ticketData.avatar} alt="Teknisi" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                <div className="w-36 h-36 rounded-full border-4 border-slate-50 shadow-xl overflow-hidden bg-blue-600/90 flex items-center justify-center text-white text-[64px] font-black mb-5 relative group">
+                                    <span className="group-hover:scale-110 transition-transform duration-500">
+                                        {(ticketData.teknisi || "U").charAt(0).toUpperCase()}
+                                    </span>
                                 </div>
                                 <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Teknisi Ditugaskan</p>
                                 <p className="text-[18px] font-black text-blue-900 text-center leading-tight">{ticketData.teknisi}</p>
@@ -491,10 +495,10 @@ export default function DetailTiket() {
                                     <div>
                                         <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" /></svg>
-                                            Nomor Task
+                                            Nama Tiket
                                         </p>
                                         <div className="bg-slate-50 py-2.5 px-6 rounded-xl border border-slate-100 inline-block shadow-sm">
-                                            <p className="text-[16px] font-bold text-slate-700">{ticketData.noTask}</p>
+                                            <p className="text-[16px] font-bold text-slate-700">{ticketData.namaTiket}</p>
                                         </div>
                                     </div>
 
@@ -619,9 +623,9 @@ export default function DetailTiket() {
                             <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Lampiran Dokumentasi</p>
                             <div className="flex gap-6 overflow-x-auto pb-4 custom-scrollbar">
                                 {ticketData.dokumentasi.map((img, i) => (
-                                    <div key={i} className="w-[280px] h-[180px] shrink-0 bg-slate-100 rounded-[24px] overflow-hidden shadow-md border-4 border-white group relative cursor-pointer">
+                                    <div key={i} onClick={() => setSelectedImage(img)} className="w-[280px] h-[180px] shrink-0 bg-slate-100 rounded-[24px] overflow-hidden shadow-md border-4 border-white group relative cursor-pointer">
                                         <img src={img} alt={`Dokumentasi ${i}`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                                        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             <svg className="w-8 h-8 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                                         </div>
                                     </div>
@@ -685,6 +689,27 @@ export default function DetailTiket() {
                     </div>
                 )}
             </div>
+            {/* Image Modal */}
+            {selectedImage && (
+                <div 
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 cursor-zoom-out animate-in fade-in duration-300"
+                    onClick={() => setSelectedImage(null)}
+                >
+                    <div className="relative max-w-[90vw] max-h-[90vh]">
+                        <img 
+                            src={selectedImage} 
+                            alt="Dokumentasi Full" 
+                            className="w-auto h-auto max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl" 
+                        />
+                        <button 
+                            className="absolute -top-4 -right-4 bg-white text-slate-800 p-2 rounded-full shadow-lg hover:bg-slate-100 transition-colors"
+                            onClick={(e) => { e.stopPropagation(); setSelectedImage(null); }}
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -188,108 +188,145 @@ export default function BuatTiket() {
                 </div>
 
                 <div className="w-full md:w-7/12 p-10 md:p-12 flex flex-col justify-center bg-white">
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <form onSubmit={handleSubmit} className="space-y-7 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-black text-slate-800 tracking-tight">Formulir Tiket Baru</h2>
+                            <p className="text-sm font-semibold text-slate-500 mt-1">Lengkapi informasi di bawah ini untuk menugaskan perbaikan.</p>
+                        </div>
+
                         {/* Nama Tiket */}
-                        <div>
-                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2 ml-1">Nama Tiket <span className="text-rose-500">*</span></label>
-                            <input
-                                type="text"
-                                value={ticketName}
-                                onChange={(e) => setTicketName(e.target.value)}
-                                placeholder="Masukkan nama tiket..."
-                                required
-                                className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-3.5 text-slate-800 font-semibold text-[14px] outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm"
-                            />
+                        <div className="relative group">
+                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Nama Tiket <span className="text-rose-500">*</span></label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <svg className="w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                </div>
+                                <input
+                                    type="text"
+                                    value={ticketName}
+                                    onChange={(e) => setTicketName(e.target.value)}
+                                    placeholder="Contoh: Jaringan Wi-Fi Lantai 2 Terputus"
+                                    required
+                                    className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl pl-11 pr-4 py-3.5 text-slate-800 font-bold text-[14px] outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:bg-white transition-all shadow-sm placeholder:text-slate-400/80 placeholder:font-medium"
+                                />
+                            </div>
                         </div>
 
                         {/* Deskripsi */}
-                        <div>
-                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2 ml-1">Deskripsi <span className="text-rose-500">*</span></label>
+                        <div className="relative group">
+                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Deskripsi Detail <span className="text-rose-500">*</span></label>
                             <textarea
                                 value={ticketDesc}
                                 onChange={(e) => setTicketDesc(e.target.value)}
                                 rows={4}
-                                placeholder="Jelaskan kendala secara detail..."
+                                placeholder="Jelaskan kronologi, letak spesifik, atau gejala kendala yang dialami..."
                                 required
-                                className="w-full bg-slate-50 border border-slate-200/80 rounded-2xl px-5 py-4 text-slate-700 font-semibold text-[13px] outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm resize-none"
+                                className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-5 py-4 text-slate-800 font-bold text-[14px] outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:bg-white transition-all shadow-sm resize-none placeholder:text-slate-400/80 placeholder:font-medium leading-relaxed"
                             ></textarea>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             {/* Deadline */}
-                            <div>
-                                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2 ml-1">Deadline <span className="text-rose-500">*</span></label>
+                            <div className="relative group">
+                                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Deadline <span className="text-rose-500">*</span></label>
                                 <input
                                     type="datetime-local"
                                     value={deadline}
                                     onChange={(e) => setDeadline(e.target.value)}
                                     required
-                                    className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-3.5 text-slate-700 font-bold text-[13px] outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm cursor-pointer"
+                                    className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-800 font-bold text-[14px] outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:bg-white transition-all shadow-sm cursor-pointer"
                                 />
                             </div>
 
                             {/* Assignee Selection */}
-                            <div>
-                                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2 ml-1">Employee yang Ditugaskan <span className="text-rose-500">*</span></label>
+                            <div className="relative group">
+                                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Teknisi Bertugas <span className="text-rose-500">*</span></label>
                                 <div className="relative">
                                     <select
                                         value={assignedEmployeeId}
                                         onChange={(e) => setAssignedEmployeeId(e.target.value)}
                                         required
-                                        className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-3.5 text-slate-700 font-bold text-[13px] outline-none appearance-none cursor-pointer hover:bg-slate-100/60 focus:border-blue-500 focus:bg-white transition-all shadow-sm"
+                                        className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-800 font-bold text-[14px] outline-none appearance-none cursor-pointer hover:bg-slate-50 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:bg-white transition-all shadow-sm"
                                     >
                                         <option value="" disabled>Pilih Staff IT...</option>
                                         {employees.map(emp => (
-                                            /* VALUE TETEP USERNAME JAWABAN DARI BE (TIDAK BERUBAH) */
                                             <option key={emp.username} value={emp.username}>
-                                                {/* DI LAYAR MUNCUL NAMA LENGKAP YANG ENYAK DILIAT */}
                                                 {emp.displayName}
                                             </option>
                                         ))}
                                     </select>
-                                    <svg className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none z-10" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center bg-white rounded-full p-1 shadow-sm border border-slate-100">
+                                        <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Upload Evidence */}
                         <div>
-                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2 ml-1">Upload Evidence (PNG/JPG)</label>
-                            <div className="flex items-center gap-4">
-                                <label className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 border border-blue-200 hover:border-blue-300 text-blue-600 font-bold text-xs px-4 py-3 rounded-xl cursor-pointer transition-all">
-                                    <span>Pilih File</span>
-                                    <input
-                                        type="file"
-                                        accept="image/png, image/jpeg, image/jpg"
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) setEvidenceFile(file);
-                                        }}
-                                        className="hidden"
-                                    />
-                                </label>
-                                <span className="text-xs text-slate-500 font-semibold truncate max-w-[250px]">
-                                    {evidenceFile ? evidenceFile.name : 'Belum ada file dipilih'}
-                                </span>
-                            </div>
+                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Upload Bukti / Dokumentasi (Opsional)</label>
+                            <label className={`mt-1 flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-all ${evidenceFile ? 'border-blue-400 bg-blue-50/50' : 'border-slate-300 bg-slate-50/50 hover:bg-slate-50 hover:border-blue-400 group'}`}>
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
+                                    {evidenceFile ? (
+                                        <>
+                                            <div className="w-10 h-10 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center mb-2 shadow-sm">
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
+                                            </div>
+                                            <p className="text-sm font-bold text-blue-700 truncate max-w-full">{evidenceFile.name}</p>
+                                            <p className="text-[11px] font-semibold text-blue-500/70 mt-1 uppercase tracking-widest">Klik untuk mengganti foto</p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="w-10 h-10 bg-white text-slate-400 group-hover:text-blue-500 rounded-full flex items-center justify-center mb-3 shadow-sm border border-slate-100 transition-colors">
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                                            </div>
+                                            <p className="mb-1 text-sm text-slate-600 font-bold"><span className="text-blue-500">Klik untuk mengunggah</span> </p>
+                                            <p className="text-xs text-slate-400 font-medium">PNG, JPG atau JPEG </p>
+                                        </>
+                                    )}
+                                </div>
+                                <input 
+                                    type="file" 
+                                    accept="image/png, image/jpeg, image/jpg" 
+                                    className="hidden" 
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) setEvidenceFile(file);
+                                    }}
+                                />
+                            </label>
                         </div>
 
                         {submitError && (
-                            <p className="text-xs font-semibold text-rose-500 bg-rose-50 border border-rose-100 px-4 py-2 rounded-xl">
-                                {submitError}
-                            </p>
+                            <div className="flex items-center gap-3 bg-rose-50 border border-rose-200/60 p-4 rounded-2xl animate-in fade-in duration-300">
+                                <div className="w-8 h-8 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center shrink-0">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </div>
+                                <p className="text-[13px] font-bold text-rose-600 leading-tight">{submitError}</p>
+                            </div>
                         )}
 
-                        <div className="flex gap-4 pt-3">
+                        <div className="flex gap-4 pt-4 border-t border-slate-100 mt-6">
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="flex-1 bg-[#22c55e] hover:bg-[#16a34a] disabled:bg-slate-300 text-white py-3.5 rounded-full font-black text-[14px]"
+                                className="flex-[2] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-slate-400 disabled:to-slate-400 text-white py-4 rounded-2xl font-black text-[15px] shadow-[0_8px_20px_rgba(37,99,235,0.25)] hover:shadow-[0_10px_25px_rgba(37,99,235,0.35)] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                             >
-                                {isSubmitting ? 'Mengirim...' : 'Buat Tiket'}
+                                {isSubmitting ? (
+                                    <>
+                                        <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                        Memproses...
+                                    </>
+                                ) : (
+                                    <>
+                                        Buat Tiket Sekarang
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                                    </>
+                                )}
                             </button>
-                            <button type="button" onClick={handleClear} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-3.5 rounded-full font-black text-[14px]">
-                                Reset Form
+                            <button type="button" onClick={handleClear} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-4 rounded-2xl font-black text-[14px] transition-all active:scale-[0.98]">
+                                Reset
                             </button>
                         </div>
                     </form>

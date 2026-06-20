@@ -162,7 +162,7 @@ export default function LihatTiket() {
                                     type="text"
                                     value={filterTech} 
                                     onChange={(e) => setFilterTech(e.target.value)} 
-                                    placeholder="Cari teknisi (min 3 huruf)..."
+                                    placeholder="Cari Teknisi"
                                     className="w-full bg-transparent text-sm font-bold text-slate-700 outline-none z-10 placeholder-slate-400"
                                 />
                                 <svg className="w-4 h-4 text-slate-400 absolute right-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>

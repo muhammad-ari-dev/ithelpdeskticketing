@@ -9,6 +9,15 @@ const axiosClient = axios.create({
 
 // Attach JWT token ke setiap request jika tersedia
 axiosClient.interceptors.request.use((config) => {
+  if (config.data instanceof FormData) {
+    if (typeof config.headers?.delete === "function") {
+      config.headers.delete("Content-Type");
+    } else if (config.headers) {
+      delete (config.headers as any)["Content-Type"];
+      delete (config.headers as any)["content-type"];
+    }
+  }
+
   const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
   const token = currentUser?.token;
   if (token) {

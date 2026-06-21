@@ -2,112 +2,54 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUserContext } from '../context/UserContext';
 import { calculateDynamicPriority, getPriorityBadgeStyle } from '../utils/ticketUtils';
+import { authApi } from '../api/authApi';
 
 export default function DetailTiket() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const { users, getStaffs, updateUserPoints } = useUserContext();
+    const { users, getStaffs } = useUserContext();
     const activeStaffs = getStaffs().filter(s => s.status === 'Aktif');
 
     const TicketTimer = ({ assignedAt, takenAt, checkedAt, status, pointsEarned }: { assignedAt?: string, takenAt?: string, checkedAt?: string, status: string, pointsEarned?: number }) => {
-        const [timeLeft, setTimeLeft] = useState<number | null>(null);
-        const [isLate, setIsLate] = useState(false);
-        const [label, setLabel] = useState('');
-
-        useEffect(() => {
-            let interval: any;
-            const calculateTime = () => {
-                const now = new Date().getTime();
-                let targetTime = 0;
-
-                if (status === 'Assigned' && assignedAt) {
-                    targetTime = new Date(assignedAt).getTime() + (30 * 60 * 1000);
-                    setLabel('Batas Waktu Ambil Tiket (30m)');
-                } else {
-                    setTimeLeft(null);
-                    return;
-                }
-
-                const diff = targetTime - now;
-                if (diff <= 0) {
-                    setTimeLeft(0);
-                    setIsLate(true);
-                } else {
-                    setTimeLeft(Math.floor(diff / 1000));
-                    setIsLate(false);
-                }
-            };
-
-            calculateTime();
-            if (status === 'Assigned') {
-                interval = setInterval(calculateTime, 1000);
-            }
-            return () => clearInterval(interval);
-        }, [assignedAt, takenAt, status]);
-
         if (status === 'Completed') {
             const start = takenAt ? new Date(takenAt).getTime() : (assignedAt ? new Date(assignedAt).getTime() : 0);
             const end = checkedAt ? new Date(checkedAt).getTime() : new Date().getTime();
             
-            if (start > 0) {
-                const diffMs = Math.max(0, end - start);
-                const h = Math.floor(diffMs / (1000 * 60 * 60));
-                const m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            // if (start > 0) {
+            //     const diffMs = Math.max(0, end - start);
+            //     const h = Math.floor(diffMs / (1000 * 60 * 60));
+            //     const m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
                 
-                return (
-                    <div className="mb-8 p-5 rounded-[24px] flex flex-col md:flex-row items-start md:items-center justify-between border-2 shadow-sm bg-emerald-50 border-emerald-200">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 rounded-full bg-emerald-100 text-emerald-500">
-                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                            </div>
-                            <div>
-                                <p className="text-[12px] font-black uppercase tracking-widest text-emerald-600">Tiket Selesai (History)</p>
-                                <p className="text-[28px] font-black leading-none mt-1 text-emerald-600">
-                                    Waktu Pengerjaan: {h > 0 ? `${h}j ` : ''}{m}m
-                                </p>
-                            </div>
-                        </div>
-                        {pointsEarned !== undefined && (
-                            <div className="mt-4 md:mt-0 flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-emerald-100 shadow-sm">
-                                <span className="text-[12px] font-bold text-slate-500 uppercase tracking-widest">Poin Didapat:</span>
-                                <span className="text-[18px] font-black text-emerald-600">+{pointsEarned}</span>
-                            </div>
-                        )}
-                    </div>
-                );
-            }
+            //     return (
+            //         <div className="mb-8 p-5 rounded-[24px] flex flex-col md:flex-row items-start md:items-center justify-between border-2 shadow-sm bg-emerald-50 border-emerald-200">
+            //             <div className="flex items-center gap-4">
+            //                 <div className="p-3 rounded-full bg-emerald-100 text-emerald-500">
+            //                     <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            //                 </div>
+            //                 <div>
+            //                     <p className="text-[12px] font-black uppercase tracking-widest text-emerald-600">Tiket Selesai (History)</p>
+            //                     <p className="text-[28px] font-black leading-none mt-1 text-emerald-600">
+            //                         Waktu Pengerjaan: {h > 0 ? `${h}j ` : ''}{m}m
+            //                     </p>
+            //                 </div>
+            //             </div>
+            //             {pointsEarned !== undefined && (
+            //                 <div className="mt-4 md:mt-0 flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-emerald-100 shadow-sm">
+            //                     <span className="text-[12px] font-bold text-slate-500 uppercase tracking-widest">Poin Didapat:</span>
+            //                     <span className="text-[18px] font-black text-emerald-600">+{pointsEarned}</span>
+            //                 </div>
+            //             )}
+            //         </div>
+            //     );
+            // }
         }
-
-        if (timeLeft === null) return null;
-
-        const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-        const s = (timeLeft % 60).toString().padStart(2, '0');
-
-        return (
-            <div className={`mb-8 p-5 rounded-[24px] flex flex-col md:flex-row items-start md:items-center justify-between border-2 shadow-sm ${isLate ? 'bg-rose-50 border-rose-200 animate-[pulse_2s_ease-in-out_infinite]' : 'bg-blue-50 border-blue-200'}`}>
-                <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-full ${isLate ? 'bg-rose-100 text-rose-500' : 'bg-blue-100 text-blue-500'}`}>
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    </div>
-                    <div>
-                        <p className={`text-[12px] font-black uppercase tracking-widest ${isLate ? 'text-rose-500' : 'text-blue-500'}`}>{label}</p>
-                        <p className={`text-[28px] font-black leading-none mt-1 ${isLate ? 'text-rose-600' : 'text-blue-600'}`}>
-                            {isLate ? 'Waktu Habis!' : `${m} : ${s}`}
-                        </p>
-                    </div>
-                </div>
-                {isLate && (
-                    <div className="mt-4 md:mt-0 flex items-center gap-2 bg-rose-100 text-rose-600 px-4 py-2 rounded-xl font-bold text-[13px]">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        Poin Akan Dikurangi
-                    </div>
-                )}
-            </div>
-        );
+        return null;
     };
 
     // ================= STATE & DATA =================
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [showSuccessPopup, setShowSuccessPopup] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -118,20 +60,18 @@ export default function DetailTiket() {
 
     // Mengambil state dari navigasi LihatTiket (jika ada), jika tidak gunakan default
     const passedData = location.state as any;
+    const ticketCode = passedData?.ticketCode || passedData?.id;
 
     const [ticketData, setTicketData] = useState({
         id: passedData?.id || '',
-        noTask: passedData?.id || '005',
+        noTask: passedData?.ticketCode || passedData?.id || '005',
         namaTiket: passedData?.ticketName || passedData?.task || 'Lepas Kabel Jaringan',
         teknisi: passedData?.assignedEmployeeName || passedData?.tech || 'Belum diatur',
-        deadline: passedData?.date || 'Belum diatur', 
+        deadline: passedData?.deadline || passedData?.date || 'Belum diatur', 
         createdAt: passedData?.createdAt || passedData?.date || 'Belum diatur',
         kategori: passedData?.priority || 'HIGH',
         detailPesanan: passedData?.fullDetail || passedData?.task || 'Tidak ada detail pesanan.',
-        dokumentasi: [
-            'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?q=80&w=500',
-            'https://images.unsplash.com/photo-1603302576837-37561b2e2302?q=80&w=500'
-        ],
+        dokumentasi: [] as string[],
         avatar: passedData?.avatar || 'https://i.pravatar.cc/150?img=15',
         status: passedData?.status || 'Assigned',
         assignedAt: passedData?.assignedAt || undefined,
@@ -141,6 +81,63 @@ export default function DetailTiket() {
         pointsEarned: passedData?.pointsEarned || 0,
         reopenCount: passedData?.reopenCount || 0,
     });
+
+    const mapBackendStatus = (statusStr: string) => {
+        if (!statusStr) return 'Assigned';
+        const s = statusStr.toLowerCase();
+        if (s === 'open' || s === 'on checking') return 'Assigned';
+        if (s === 'on progress' || s === 'in progress') return 'On Progress';
+        if (s === 'on check') return 'On Check';
+        if (s === 'complete' || s === 'completed') return 'Completed';
+        if (s === 'reopen') return 'Reopen';
+        return statusStr;
+    };
+
+    const fetchTicketDetails = async () => {
+        if (!ticketCode) {
+            setError("Kode tiket tidak ditemukan.");
+            setIsLoading(false);
+            return;
+        }
+        try {
+            setIsLoading(true);
+            setError(null);
+            const response = await authApi.getTicket(ticketCode);
+            const data = response.data;
+            if (data) {
+                setTicketData({
+                    id: data.id || '',
+                    noTask: data.ticketCode || data.id || '',
+                    namaTiket: data.ticketName || '',
+                    teknisi: data.assignedEmployeeName || 'Belum diatur',
+                    deadline: data.deadline || 'Belum diatur',
+                    createdAt: data.createdAt || 'Belum diatur',
+                    kategori: data.status || 'HIGH',
+                    detailPesanan: data.ticketDesc || '',
+                    dokumentasi: data.evidences || [],
+                    avatar: 'https://i.pravatar.cc/150?img=15',
+                    status: mapBackendStatus(data.status),
+                    assignedAt: data.assignedAt || undefined,
+                    takenAt: data.takenAt || undefined,
+                    checkedAt: data.checkedAt || undefined,
+                    completedAt: data.completedAt || undefined,
+                    pointsEarned: data.pointsEarned || 0,
+                    reopenCount: data.reopenCount || 0,
+                });
+            } else {
+                setError("Data tiket tidak ditemukan di server.");
+            }
+        } catch (err) {
+            console.error("Error fetching ticket:", err);
+            setError("Gagal memuat detail tiket dari backend.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchTicketDetails();
+    }, [ticketCode]);
 
     // Update avatar berdasarkan teknisi yang dipilih dari context
     useEffect(() => {
@@ -154,98 +151,47 @@ export default function DetailTiket() {
     }, [ticketData.teknisi, users]);
 
     // ================= HANDLERS =================
-    const handleSaveEdit = (e: React.FormEvent) => {
+    const handleSaveEdit = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        // Simpan perubahan ke localStorage
-        if (ticketData.id) {
-            const allSaved = localStorage.getItem('ticketsData');
-            if (allSaved) {
-                let allTickets = JSON.parse(allSaved);
-                allTickets = allTickets.map((t: any) => t.id === ticketData.id ? { 
-                    ...t, 
-                    date: ticketData.deadline,
-                    tech: ticketData.teknisi,
-                    avatar: ticketData.avatar,
-                    fullDetail: ticketData.detailPesanan,
-                    task: ticketData.detailPesanan.split('\n')[0].substring(0, 30),
-                    status: 'In Progress', // Sesuai kesepakatan, jika Reopen kembali ke In Progress
-                    reopenCount: (t.reopenCount || 0) + 1 // Catat histori bahwa pernah terkena reopen
-                } : t);
-                localStorage.setItem('ticketsData', JSON.stringify(allTickets));
-                setTicketData(prev => ({ ...prev, status: 'In Progress', reopenCount: (prev.reopenCount || 0) + 1 }));
-            }
-        }
+        const tCode = ticketData.noTask || ticketCode;
+        if (!tCode) return;
 
-        setShowSuccessPopup(true);
-        setTimeout(() => {
-            setShowSuccessPopup(false);
-            setIsEditing(false);
-        }, 2000);
+        try {
+            await authApi.rejectTicket(tCode, ticketData.detailPesanan);
+            setShowSuccessPopup(true);
+            setTimeout(() => {
+                setShowSuccessPopup(false);
+                setIsEditing(false);
+                fetchTicketDetails();
+            }, 2000);
+        } catch (err) {
+            console.error("Gagal me-reopen tiket:", err);
+            alert("Gagal memproses reopen tiket di server.");
+        }
     };
 
-    const handleComplete = () => {
-        updateTicketStatus('Completed');
+    const handleComplete = async () => {
+        await updateTicketStatus('Completed');
         navigate('/lihat-tiket');
     };
 
-    const updateTicketStatus = (newStatus: string) => {
-        if (!ticketData.id) return;
-        let updateFields: any = { status: newStatus };
-        const nowIso = new Date().toISOString();
-        let finalPoints = ticketData.pointsEarned || 0;
+    const updateTicketStatus = async (newStatus: string) => {
+        const tCode = ticketData.noTask || ticketCode;
+        if (!tCode) return;
 
-        if (newStatus === 'In Progress') {
-            // Catat waktu staf mengambil penugasan
-            if (!ticketData.takenAt) {
-                updateFields.takenAt = nowIso;
+        try {
+            if (newStatus === 'On Progress') {
+                await authApi.startTicket(tCode);
+            } else if (newStatus === 'On Check') {
+                await authApi.submitToCheck(tCode, "Teknisi mengajukan pengecekan selesai");
+            } else if (newStatus === 'Completed') {
+                await authApi.approveTicket(tCode, "Head IT menyetujui tiket selesai");
             }
-        } else if (newStatus === 'On Check') {
-            // Catat waktu staf menyelesaikan dan mengajukan pengecekan
-            updateFields.checkedAt = nowIso;
-        } else if (newStatus === 'Completed') {
-            updateFields.completedAt = nowIso;
-
-            // KALKULASI POIN FINAL HANYA KETIKA COMPLETED
-            const hasReopen = (ticketData.reopenCount && ticketData.reopenCount > 0) || false;
-            
-            if (hasReopen) {
-                // Jika pernah direopen, 0 poin
-                finalPoints = 0;
-            } else {
-                let calculatedPoints = 0;
-                // 1. Cepat ambil penugasan (<= 30 menit) -> +5 poin
-                if (ticketData.assignedAt && ticketData.takenAt) {
-                    const diffMins = (new Date(ticketData.takenAt).getTime() - new Date(ticketData.assignedAt).getTime()) / (1000 * 60);
-                    if (diffMins <= 30) calculatedPoints += 5;
-                }
-                
-                // 2. Tepat waktu (On Check sebelum deadline) -> +10 poin
-                if (ticketData.checkedAt && ticketData.deadline) {
-                    // deadline format is 'DD/MM/YYYY HH:mm'
-                    const dl = toInputFormat(ticketData.deadline); // yields 'YYYY-MM-DDTHH:mm'
-                    const dlTime = new Date(dl).getTime();
-                    const checkTime = new Date(ticketData.checkedAt).getTime();
-                    if (checkTime <= dlTime) calculatedPoints += 10;
-                }
-                finalPoints = calculatedPoints;
-            }
-
-            updateFields.pointsEarned = finalPoints;
-
-            // Update user points di global context
-            const techStaff = users.find(u => u.name === ticketData.teknisi && u.roleName === 'Staff IT');
-            if (techStaff) {
-                updateUserPoints(techStaff.id, finalPoints);
-            }
-        }
-
-        const allSaved = localStorage.getItem('ticketsData');
-        if (allSaved) {
-            let allTickets = JSON.parse(allSaved);
-            allTickets = allTickets.map((t: any) => t.id === ticketData.id ? { ...t, ...updateFields } : t);
-            localStorage.setItem('ticketsData', JSON.stringify(allTickets));
-            setTicketData(prev => ({ ...prev, ...updateFields }));
+            await fetchTicketDetails();
+        } catch (err) {
+            console.error("Gagal memperbarui status tiket:", err);
+            alert("Gagal memperbarui status tiket di server.");
         }
     };
 
@@ -272,6 +218,35 @@ export default function DetailTiket() {
         return `${parts[2]}/${parts[1]}/${parts[0]} ${timePart || '00:00'}`;
     };
 
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center font-sans">
+                <div className="flex flex-col items-center bg-white p-10 rounded-[32px] shadow-2xl border border-slate-100 min-w-[320px]">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+                    <p className="text-slate-500 font-bold text-lg">Memuat detail tiket...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center font-sans px-4">
+                <div className="bg-white p-8 rounded-[32px] shadow-2xl flex flex-col items-center border border-slate-100 max-w-md w-full text-center">
+                    <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mb-4 border border-rose-100">
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <h3 className="text-xl font-black text-slate-800">Terjadi Kesalahan</h3>
+                    <p className="text-sm font-bold text-slate-500 mt-2">{error}</p>
+                    <button onClick={() => navigate(-1)} className="mt-6 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-full text-sm shadow-md transition active:scale-95">
+                        Kembali
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center py-10 px-4 font-sans relative overflow-hidden">
@@ -295,17 +270,17 @@ export default function DetailTiket() {
             <div className="w-full max-w-[1100px] bg-[#3B82F6] rounded-[32px] shadow-[0_15px_30px_rgba(59,130,246,0.3)] flex flex-col px-6 md:px-8 py-5 mb-8 z-10">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                     <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 md:ml-2">
-                        {currentUser?.role !== 'STAFF_IT_LEADER' && (
+                        {currentUser?.roleName !== 'EMPLOYEE' && (
                             <button onClick={() => navigate('/buat-tiket')} className="text-white hover:text-blue-200 font-bold text-[14px] md:text-[15px] transition-colors">Buat Tiket</button>
+                        )}
+                        {currentUser?.roleName !== 'EMPLOYEE' && (
+                            <button onClick={() => navigate('/lihat-tiket')} className="text-white hover:text-blue-200 font-bold text-[14px] md:text-[15px] transition-colors">Lihat Tiket</button>
                         )}
                         <div className="bg-white px-6 py-1.5 rounded-full shadow-sm">
                             <span className="text-[#1E40AF] font-black text-[14px] md:text-[15px] tracking-wide">Detail Tiket</span>
                         </div>
-                        {currentUser?.role !== 'STAFF_IT_LEADER' && (
-                            <button onClick={() => navigate('/lihat-tiket')} className="text-white hover:text-blue-200 font-bold text-[14px] md:text-[15px] transition-colors">Lihat Tiket</button>
-                        )}
                     </div>
-                    <button onClick={() => navigate(currentUser?.role === 'STAFF_IT_LEADER' ? '/dashboard-staff' : '/dashboard-head')} className="flex items-center gap-2 bg-blue-800/40 hover:bg-blue-800/80 px-4 py-1.5 rounded-full transition-colors border-2 border-blue-900/50">
+                    <button onClick={() => navigate(currentUser?.roleName === 'EMPLOYEE' ? '/dashboard-staff' : '/dashboard-head')} className="flex items-center gap-2 bg-blue-800/40 hover:bg-blue-800/80 px-4 py-1.5 rounded-full transition-colors border-2 border-blue-900/50">
                         <div className="bg-white rounded-full p-0.5">
                             <svg className="w-3.5 h-3.5 text-blue-900" fill="currentColor" viewBox="0 0 24 24"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>
                         </div>
@@ -519,10 +494,11 @@ export default function DetailTiket() {
                         <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm mb-8">
                             <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
                                 <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                Timeline & Poin Pengerjaan
+                                Timeline Pengerjaan
                             </h3>
                             <div className="flex flex-col gap-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-slate-100">
                                 
+                                {/* 1. ASSIGNED */}
                                 <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                                     <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-blue-500 text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
@@ -537,6 +513,22 @@ export default function DetailTiket() {
                                     </div>
                                 </div>
 
+                                {/* SISIPAN: JIKA TIKET SEDANG DIREOPEN & BELUM DIAMBIL LAGI */}
+                                {ticketData.status === 'Reopen' && !ticketData.takenAt && (
+                                    <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active animate-pulse">
+                                        <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-amber-500 text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                        </div>
+                                        <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-amber-50 p-4 rounded-2xl shadow-sm border border-amber-200">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <p className="font-bold text-amber-700 text-sm">Tiket Dikembalikan (Reopen)</p>
+                                            </div>
+                                            <p className="text-xs text-amber-600 font-medium">Menunggu Staff mengambil ulang tugas ini.</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 2. TAKEN / IN PROGRESS */}
                                 {ticketData.takenAt && (
                                     <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                                         <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-indigo-500 text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
@@ -545,10 +537,10 @@ export default function DetailTiket() {
                                         <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-slate-50 p-4 rounded-2xl shadow-sm border border-slate-100 relative">
                                             <div className="flex justify-between items-start mb-1">
                                                 <div>
-                                                        <p className="font-bold text-slate-800 text-sm">Tiket Diambil (In Progress)</p>
+                                                    <p className="font-bold text-slate-800 text-sm">Tiket Diambil (On Progress)</p>
                                                     <p className="text-xs text-slate-500 font-medium mt-0.5">{new Date(ticketData.takenAt).toLocaleString()}</p>
                                                 </div>
-                                                {ticketData.assignedAt && (() => {
+                                                {/* {ticketData.assignedAt && (() => {
                                                     const diff = (new Date(ticketData.takenAt).getTime() - new Date(ticketData.assignedAt).getTime()) / (1000 * 60);
                                                     const isOnTime = diff <= 30;
                                                     return (
@@ -556,15 +548,16 @@ export default function DetailTiket() {
                                                             {isOnTime ? '+5 Poin (Tepat Waktu)' : '-5 Poin (Terlambat)'}
                                                         </div>
                                                     );
-                                                })()}
+                                                })()} */}
                                             </div>
                                         </div>
                                     </div>
                                 )}
 
+                                {/* 3. CHECKED / ON CHECK */}
                                 {ticketData.checkedAt && (
                                     <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                                        <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-amber-500 text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                                        <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-purple-500 text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                                         </div>
                                         <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-slate-50 p-4 rounded-2xl shadow-sm border border-slate-100 relative">
@@ -573,7 +566,7 @@ export default function DetailTiket() {
                                                     <p className="font-bold text-slate-800 text-sm">Pengajuan Pengecekan (On Check)</p>
                                                     <p className="text-xs text-slate-500 font-medium mt-0.5">{new Date(ticketData.checkedAt).toLocaleString()}</p>
                                                 </div>
-                                                {ticketData.takenAt && (() => {
+                                                {/* {ticketData.takenAt && (() => {
                                                     const diff = (new Date(ticketData.checkedAt).getTime() - new Date(ticketData.takenAt).getTime()) / (1000 * 60);
                                                     const isOnTime = diff <= 15;
                                                     return (
@@ -581,12 +574,13 @@ export default function DetailTiket() {
                                                             {isOnTime ? '+10 Poin (Tepat Waktu)' : '-10 Poin (Terlambat)'}
                                                         </div>
                                                     );
-                                                })()}
+                                                })()} */}
                                             </div>
                                         </div>
                                     </div>
                                 )}
 
+                                {/* 4. COMPLETED */}
                                 {ticketData.completedAt && (
                                     <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                                         <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-emerald-500 text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
@@ -600,11 +594,6 @@ export default function DetailTiket() {
                                         </div>
                                     </div>
                                 )}
-                            </div>
-
-                            <div className="mt-6 p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between">
-                                <span className="text-sm font-black text-amber-700 uppercase tracking-widest">Total Poin Diperoleh dari Tiket Ini:</span>
-                                <span className="text-2xl font-black text-amber-500">⭐ {ticketData.pointsEarned}</span>
                             </div>
                         </div>
 
@@ -634,17 +623,17 @@ export default function DetailTiket() {
                         </div>
 
                         {/* Tombol Aksi (Berbeda antara Head dan Staff) */}
-                        {currentUser?.role === 'STAFF_IT_LEADER' ? (
+                        {currentUser?.roleName === 'EMPLOYEE' ? (
                             <div className="mt-8 border-t border-slate-100 pt-8 w-full">
-                                {ticketData.status === 'Assigned' ? (
+                                {ticketData.status === 'Assigned' || ticketData.status === 'Reopen' ? (
                                     <button 
-                                        onClick={() => updateTicketStatus('In Progress')}
+                                        onClick={() => updateTicketStatus('On Progress')}
                                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl text-[15px] shadow-[0_4px_12px_rgba(37,99,235,0.2)] transition-all active:scale-95 flex items-center justify-center gap-2"
                                     >
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                         Ambil Penugasan
                                     </button>
-                                ) : ticketData.status === 'In Progress' ? (
+                                ) : ticketData.status === 'On Progress' ? (
                                     <button 
                                         onClick={() => updateTicketStatus('On Check')}
                                         className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black py-4 rounded-2xl text-[15px] shadow-[0_4px_12px_rgba(147,51,234,0.2)] transition-all active:scale-95 flex items-center justify-center gap-2"

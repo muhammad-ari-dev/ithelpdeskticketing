@@ -61,8 +61,6 @@ public class EmployeeService {
         List<EmployeesResponseDTO> dtoList = employees.stream().map(employee -> {
             EmployeesResponseDTO dto = modelMapper.map(employee, EmployeesResponseDTO.class);
 
-            dto.setId(employee.getId());
-            dto.setStatus(employee.getAccountStatus());
             // Format Updated Date conditionally
             dto.setCreatedAt(employee.getCreatedAt().format(formatter));
             if ("INACTIVE".equals(employee.getAccountStatus()) && employee.getUpdatedAt() != null) {

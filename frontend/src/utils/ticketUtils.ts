@@ -12,8 +12,8 @@
  * - Jika status tiket sudah 'Completed' (Selesai), maka sisa waktu dihitung 
  *   berdasarkan titik waktu saat tiket tersebut diselesaikan (`completedAt`), bukan waktu saat ini.
  * - Sisa Waktu <= 1 Hari (atau sudah terlambat) -> Prioritas HIGH
- * - Sisa Waktu > 1 Hari s/d 5 Hari -> Prioritas MEDIUM
- * - Sisa Waktu > 5 Hari -> Prioritas LOW
+ * - Sisa Waktu > 1 Hari s/d 3 Hari -> Prioritas MEDIUM
+ * - Sisa Waktu > 3 Hari -> Prioritas LOW
  * 
  * @param {string} dateStr - Tanggal jatuh tempo (deadline) tiket dalam format "DD/MM/YYYY HH:mm".
  * @param {string} [status] - (Opsional) Status tiket saat ini, misalnya 'Completed', 'In Progress', dll.
@@ -24,26 +24,34 @@
 export const calculateDynamicPriority = (dateStr: string, status?: string, completedAt?: string, isReopened?: boolean) => {
     // Kembalikan nilai bawaan (LOW) jika tidak ada tanggal jatuh tempo yang diberikan
     if (!dateStr) return 'LOW';
-    
-    // Memecah string tanggal dan waktu dari format "DD/MM/YYYY HH:mm"
-    const parts = dateStr.split(' ');
-    const dateParts = parts[0].split('/');
-    
-    // Berikan nilai default '00:00' jika bagian waktu tidak tersedia
-    const timeParts = parts[1] ? parts[1].split(':') : ['00', '00'];
-    
-    // Validasi dasar, pastikan format tanggal memiliki bagian Hari, Bulan, dan Tahun
-    if (dateParts.length !== 3) return 'LOW';
-    
-    // Membuat objek Date untuk target jatuh tempo (deadline)
-    // Perlu diingat: Index bulan pada JavaScript Date dimulai dari 0 (Januari = 0)
-    const targetDate = new Date(
-        Number(dateParts[2]),    // Tahun
-        Number(dateParts[1]) - 1, // Bulan
-        Number(dateParts[0]),    // Hari
-        Number(timeParts[0]),    // Jam
-        Number(timeParts[1])     // Menit
-    );
+
+    const parseDeadline = (value: string) => {
+        const normalizedValue = value.trim();
+
+        if (normalizedValue.includes('/')) {
+            const parts = normalizedValue.split(' ');
+            const dateParts = parts[0].split('/');
+            const timeParts = parts[1] ? parts[1].split(':') : ['23', '59'];
+
+            if (dateParts.length !== 3) return null;
+
+            const parsedDate = new Date(
+                Number(dateParts[2]),
+                Number(dateParts[1]) - 1,
+                Number(dateParts[0]),
+                Number(timeParts[0]),
+                Number(timeParts[1])
+            );
+
+            return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+        }
+
+        const parsedDate = new Date(normalizedValue);
+        return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+    };
+
+    const targetDate = parseDeadline(dateStr);
+    if (!targetDate) return 'LOW';
     
     // Menentukan waktu pembanding (waktu saat ini atau waktu saat tiket diselesaikan)
     let compareDate = new Date();
@@ -54,17 +62,18 @@ export const calculateDynamicPriority = (dateStr: string, status?: string, compl
         compareDate = new Date(completedAt);
     }
     
-    // Menghitung selisih waktu dalam milidetik, lalu mengonversinya menjadi pembulatan ke atas (H-Hari)
+    // Menghitung selisih waktu dalam milidetik agar batas 1 dan 3 hari mengikuti waktu saat ini.
     const diffMs = targetDate.getTime() - compareDate.getTime();
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const oneDayMs = 1000 * 60 * 60 * 24;
+    const threeDaysMs = oneDayMs * 3;
     
     // Menentukan status berdasarkan aturan sisa hari
-    if (diffDays <= 1) {
+    if (diffMs <= oneDayMs) {
         return 'HIGH';   // Sisa waktu 1 hari atau sudah kedaluwarsa (overdue)
-    } else if (diffDays <= 5) {
-        return 'MEDIUM'; // Sisa waktu antara 2 hingga 5 hari
+    } else if (diffMs <= threeDaysMs) {
+        return 'MEDIUM'; // Sisa waktu lebih dari 1 hari sampai 3 hari
     } else {
-        return 'LOW';    // Sisa waktu masih lebih dari 5 hari
+        return 'LOW';    // Sisa waktu masih lebih dari 3 hari
     }
 };
 

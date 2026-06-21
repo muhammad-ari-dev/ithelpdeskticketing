@@ -298,6 +298,9 @@ export default function DashboardAdmin() {
             setSelectedUser(prev => prev && String(prev.id) === String(editUser.id) ? updatedUser : prev);
             setEditUser(null);
             setAlertMessage(response?.message || `${editFormData.name} berhasil diperbarui.`);
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
         } catch (error) {
             console.error('[editEmployee] error:', error);
             setAlertMessage(getApiErrorMessage(error, 'Gagal memperbarui data karyawan. Silakan coba lagi.'));

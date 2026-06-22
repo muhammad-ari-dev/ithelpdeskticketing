@@ -1,5 +1,6 @@
 package com.juaracoding.ITHelpdeskTicketing.service;
 
+import com.juaracoding.ITHelpdeskTicketing.dto.response.TicketLogDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.response.TicketResponseDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.response.TicketsResponseDTO;
 import com.juaracoding.ITHelpdeskTicketing.dto.validation.CreateTicketDTO;
@@ -126,22 +127,43 @@ public class TicketService {
         LocalDateTime completedAt = null;
         int reopenCount = 0;
 
+        List<TicketLogDTO> histories = new java.util.ArrayList<>();
+        DateTimeFormatter logFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy HH:mm", Locale.ENGLISH);
+
         // Loop the timeline to map timestamps
         if (ticket.getTimelines() != null) {
-            for (TicketLog log : ticket.getTimelines()) {
+
+            List<TicketLog> sortedLogs = ticket.getTimelines().stream()
+                    .filter(log -> log.getCreatedAt() != null) // Safety check agar tidak NullPointerException
+                    .sorted(java.util.Comparator.comparing(TicketLog::getCreatedAt))
+                    .toList();
+
+            for (TicketLog log : sortedLogs) {
+
+                TicketLogDTO logDto = new TicketLogDTO();
+                logDto.setStatus(log.getStatus());
+                logDto.setExtraNote(log.getExtraNote());
+                logDto.setCreatedBy(log.getEmployee() != null ? log.getEmployee().getEmployeeName() : log.getCreatedBy());
+                logDto.setCreatedAt(log.getCreatedAt() != null ? log.getCreatedAt().format(logFormatter) : "-");
+                histories.add(logDto);
+
                 String logStatus = log.getStatus();
-                if ("Open".equalsIgnoreCase(logStatus)) {
+                if ("Open".equalsIgnoreCase(logStatus) || "Assigned".equalsIgnoreCase(logStatus)) {
                     assignedAt = log.getCreatedAt();
                 } else if ("On Progress".equalsIgnoreCase(logStatus) || "In Progress".equalsIgnoreCase(logStatus)) {
-                    if (takenAt == null) {
-                        takenAt = log.getCreatedAt();
-                    }
+                    takenAt = log.getCreatedAt();
+                    checkedAt = null;
+                    completedAt = null;
                 } else if ("On Check".equalsIgnoreCase(logStatus)) {
                     checkedAt = log.getCreatedAt();
+                    completedAt = null;
                 } else if ("Complete".equalsIgnoreCase(logStatus) || "Completed".equalsIgnoreCase(logStatus)) {
                     completedAt = log.getCreatedAt();
                 } else if ("Reopen".equalsIgnoreCase(logStatus)) {
                     reopenCount++;
+                    takenAt = null;
+                    checkedAt = null;
+                    completedAt = null;
                 }
             }
         }
@@ -151,6 +173,7 @@ public class TicketService {
         dto.setCheckedAt(checkedAt != null ? checkedAt.toString() : null);
         dto.setCompletedAt(completedAt != null ? completedAt.toString() : null);
         dto.setReopenCount(reopenCount);
+        dto.setHistories(histories);
 
         return new ResponseHandler()
                 .handleResponse(ConstantMessage.OK, HttpStatus.OK, dto, request);

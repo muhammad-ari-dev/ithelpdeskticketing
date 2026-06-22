@@ -23,5 +23,6 @@ public class TicketResponseDTO {
     private String completedAt;
     private Integer pointsEarned;
     private Integer reopenCount;
+    private List<TicketLogDTO> histories;
 
 }

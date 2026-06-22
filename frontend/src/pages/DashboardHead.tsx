@@ -81,14 +81,37 @@ export default function DashboardHead() {
     loadTickets();
   }, []);
 
-  // ================= OPTIMASI SORTING (PERFORMA) =================
+  // ================= OPTIMASI SORTING (PERFORMA & PRIORITAS) =================
   const sortedTickets = useMemo(() => {
     return [...tickets].sort((a, b) => {
+      // 1. Dapatkan status dengan aman
+      const statusA = (a.status || "").toLowerCase().trim();
+      const statusB = (b.status || "").toLowerCase().trim();
+      
+      const isCompletedA = statusA === "complete" || statusA === "completed";
+      const isCompletedB = statusB === "complete" || statusB === "completed";
+
+      // 2. Paksa tiket yang SUDAH SELESAI ke urutan paling bawah
+      if (isCompletedA && !isCompletedB) return 1;
+      if (!isCompletedA && isCompletedB) return -1;
+
+      // 3. Jika sama-sama belum selesai (atau sama-sama selesai), urutkan berdasarkan bobot prioritas
       const priorityA = getDashboardPriority(a);
       const priorityB = getDashboardPriority(b);
+      
       return getPriorityWeight(priorityB, b.status ?? "") - getPriorityWeight(priorityA, a.status ?? "");
     });
   }, [tickets]);
+
+  // ================= HELPER UNTUK MENGHITUNG PRIORITAS AKTIF =================
+  const getActiveTicketsCountByPriority = (priorityLevel: string) => {
+    return tickets.filter((t) => {
+      const statusLabel = (t.status || "").toLowerCase().trim();
+      const isCompleted = statusLabel === "complete" || statusLabel === "completed";
+      // Hanya hitung jika BUKAN completed DAN level priority sesuai
+      return !isCompleted && getDashboardPriority(t) === priorityLevel;
+    }).length;
+  };
 
   const Speedometer = ({ level }: { level: "LOW" | "MEDIUM" | "HIGH" }) => {
     const rotation =
@@ -250,19 +273,19 @@ export default function DashboardHead() {
               {([
                 {
                   level: "LOW",
-                  count: tickets.filter((t) => getDashboardPriority(t) === "LOW").length,
+                  count: getActiveTicketsCountByPriority("LOW"),
                   color: "text-emerald-500",
                   desc: "Prioritas Rendah",
                 },
                 {
                   level: "MEDIUM",
-                  count: tickets.filter((t) => getDashboardPriority(t) === "MEDIUM").length,
+                  count: getActiveTicketsCountByPriority("MEDIUM"),
                   color: "text-amber-500",
                   desc: "Prioritas Sedang",
                 },
                 {
                   level: "HIGH",
-                  count: tickets.filter((t) => getDashboardPriority(t) === "HIGH").length,
+                  count: getActiveTicketsCountByPriority("HIGH"),
                   color: "text-rose-500",
                   desc: "Prioritas Tinggi",
                 },
@@ -331,7 +354,7 @@ export default function DashboardHead() {
                 <span className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold shadow-sm">
                   {tickets.filter((t) => t.status === "Reopen").length}
                 </span>
-                <span className="text-amber-700 tracking-wide hidden sm:block">Reopen</span>
+                <span className="text-amber-700 tracking-wide hidden sm:block">Reopened</span>
               </div>
             </div>
 
@@ -420,8 +443,8 @@ export default function DashboardHead() {
                       </div>
 
                       <div className="w-full sm:w-[15%] mb-3 sm:mb-0">
-                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase ${getPriorityBadgeStyle(dynamicPriority, statusLabel)}`}>
-                          {dynamicPriority}
+                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase ${isCompleted ? 'bg-slate-100 text-slate-400 border border-slate-200 shadow-none' : getPriorityBadgeStyle(dynamicPriority, statusLabel)}`}>
+                          {isCompleted ? 'NONE' : dynamicPriority}
                         </span>
                       </div>
 

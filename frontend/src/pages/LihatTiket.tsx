@@ -39,10 +39,14 @@ export default function LihatTiket() {
     const getTicketDeadline = (ticket: BackendTicket) => ticket.deadline ?? ticket.createdAt ?? ticket.date ?? '';
     const getTicketTechnician = (ticket: BackendTicket) => ticket.assignedEmployeeName ?? ticket.tech ?? '';
     const getTicketTask = (ticket: BackendTicket) => ticket.ticketName ?? ticket.task ?? '';
+    
+    // FIX: Normalisasi string status dari backend agar selalu konsisten
     const getTicketStatus = (ticket: BackendTicket) => {
-        if (ticket.status === 'Open' || ticket.status === 'On Checking') return 'Assigned';
-        if (ticket.status === 'Recheck') return 'On Check';
-        return ticket.status ?? '';
+        const s = ticket.status ?? '';
+        if (s === 'Open' || s === 'On Checking') return 'Assigned';
+        if (s === 'Recheck') return 'On Check';
+        if (s === 'Complete') return 'Completed'; // Mengubah Complete jadi Completed
+        return s;
     };
     
     const getDashboardPriority = (ticket: BackendTicket) =>
@@ -72,12 +76,12 @@ export default function LihatTiket() {
         fetchTickets();
     }, []);
 
-    // ================= LOGIKA FILTER =================
+    // ================= LOGIKA FILTER & OPTIMASI SORTING =================
     const getTicketTime = (dateString: string) => {
         if (!dateString) return 0;
         const parsedDate = new Date(dateString);
         if (!Number.isNaN(parsedDate.getTime())) return parsedDate.getTime();
-        const [day, month, year] = dateString.split(/[\/\- ]/); // support multiple date separators
+        const [day, month, year] = dateString.split(/[\/\- ]/); 
         if (!year) return 0;
         return new Date(Number(year), Number(month) - 1, Number(day), 12, 0, 0).getTime();
     };
@@ -112,7 +116,24 @@ export default function LihatTiket() {
             }
         }
         return matchTech && matchPriority && matchStatus && matchDate;
-    }).sort((a, b) => getPriorityWeight(getDashboardPriority(b), getTicketStatus(b)) - getPriorityWeight(getDashboardPriority(a), getTicketStatus(a)));
+    }).sort((a, b) => {
+        // 1. Dapatkan status dengan aman (sekarang getTicketStatus sudah di-normalize)
+        const statusA = (getTicketStatus(a) || "").toLowerCase().trim();
+        const statusB = (getTicketStatus(b) || "").toLowerCase().trim();
+        
+        const isCompletedA = statusA === "completed";
+        const isCompletedB = statusB === "completed";
+
+        // 2. Paksa tiket yang SUDAH SELESAI ke urutan paling bawah
+        if (isCompletedA && !isCompletedB) return 1;
+        if (!isCompletedA && isCompletedB) return -1;
+
+        // 3. Jika sama-sama belum selesai, urutkan berdasarkan bobot prioritas HIGH -> LOW
+        const priorityA = getDashboardPriority(a);
+        const priorityB = getDashboardPriority(b);
+        
+        return getPriorityWeight(priorityB, getTicketStatus(b)) - getPriorityWeight(priorityA, getTicketStatus(a));
+    });
 
     // ================= STYLE HANDLERS =================
     const getStatusStyle = (status: string) => {
@@ -142,12 +163,14 @@ export default function LihatTiket() {
                     </button>
                 </div>
 
+                {/* TABEL RINGKASAN TOP (TERMASUK ON CHECK) */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                     {[
                         { label: 'Waiting', count: tickets.filter(t => getTicketStatus(t) === 'Assigned').length, icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-                        { label: 'Reopen', count: tickets.filter(t => getTicketStatus(t) === 'Reopen').length, icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
                         { label: 'On Progress', count: tickets.filter(t => getTicketStatus(t) === 'On Progress').length, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
-                        { label: 'Complete', count: tickets.filter(t => getTicketStatus(t) === 'Completed').length, icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
+                        { label: 'On Check', count: tickets.filter(t => getTicketStatus(t) === 'On Check').length, icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
+                        { label: 'Reopen', count: tickets.filter(t => getTicketStatus(t) === 'Reopen').length, icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
+                        { label: 'Completed', count: tickets.filter(t => getTicketStatus(t) === 'Completed').length, icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
                         { label: 'Total Tasks', count: tickets.length, icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' }
                     ].map((stat, idx) => (
                         <div key={idx} className="bg-white rounded-2xl py-2 px-3 flex items-center gap-2 shadow-md">
@@ -160,10 +183,6 @@ export default function LihatTiket() {
                             </div>
                         </div>
                     ))}
-                    <button className="flex items-center justify-center gap-2 bg-white hover:bg-slate-50 px-3 py-2.5 rounded-2xl shadow-md border border-slate-100 col-span-2 md:col-span-1">
-                        <svg className="w-5 h-5 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" /></svg>
-                        <span className="text-[12px] font-black text-slate-700 uppercase tracking-widest">PDF</span>
-                    </button>
                 </div>
             </div>
 
@@ -251,6 +270,7 @@ export default function LihatTiket() {
                                 ) : filteredTickets.length > 0 ? (
                                     filteredTickets.map((t, index) => {
                                         const ticketStatus = getTicketStatus(t);
+                                        const isCompleted = ticketStatus === 'Completed';
                                         const ticketTask = getTicketTask(t);
                                         const dynamicPriority = getDashboardPriority(t);
                                         
@@ -280,8 +300,8 @@ export default function LihatTiket() {
                                                 </div>
 
                                                 <div onClick={(e) => e.stopPropagation()}>
-                                                    <div className={`inline-flex items-center rounded-full px-4 py-1.5 border text-[11px] font-black tracking-widest shadow-sm relative ${getPriorityBadgeStyle(dynamicPriority, ticketStatus)}`}>
-                                                        {dynamicPriority}
+                                                    <div className={`inline-flex items-center rounded-full px-4 py-1.5 border text-[11px] font-black tracking-widest shadow-sm relative ${isCompleted ? 'bg-slate-50 text-slate-400 border-slate-200 shadow-none' : getPriorityBadgeStyle(dynamicPriority, ticketStatus)}`}>
+                                                        {isCompleted ? 'NONE' : dynamicPriority}
                                                     </div>
                                                 </div>
 

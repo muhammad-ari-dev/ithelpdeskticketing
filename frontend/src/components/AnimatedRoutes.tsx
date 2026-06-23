@@ -28,26 +28,34 @@ export default function AnimatedRoutes() {
                 {/* <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} /> */}
                 
                 {/* Protected from logged-in users: redirects active sessions back to their dashboard */}
+                <Route path="/register" element={<Navigate to="/" replace />} />
                 <Route path="/" element={
                     <PublicRoute>
                         <PageTransition><Login /></PageTransition>
                     </PublicRoute>
                 } />
-                
-                <Route path="/register" element={<Navigate to="/" replace />} />
-                <Route path="/set-password" element={<SetPassword />} />
-
-                {/* Protected: LEAD only */}
-                <Route path="/dashboard-head" element={
-                    <PrivateRoute allowedRoles={['LEAD']}>
-                        <PageTransition><DashboardHead /></PageTransition>
-                    </PrivateRoute>
+                <Route path="/set-password" element={
+                    <PublicRoute>
+                        <PageTransition><SetPassword /></PageTransition>
+                    </PublicRoute>
                 } />
 
                 {/* Protected: ADMIN only */}
                 <Route path="/dashboard-admin" element={
                     <PrivateRoute allowedRoles={['ADMINISTRATOR']}>
                         <PageTransition><DashboardAdmin /></PageTransition>
+                    </PrivateRoute>
+                } />
+                  <Route path="/tambah-user" element={
+                    <PrivateRoute allowedRoles={['ADMINISTRATOR']}>
+                        <PageTransition><TambahUser /></PageTransition>
+                    </PrivateRoute>
+                } />
+
+                {/* Protected: LEAD only */}
+                <Route path="/dashboard-head" element={
+                    <PrivateRoute allowedRoles={['LEAD']}>
+                        <PageTransition><DashboardHead /></PageTransition>
                     </PrivateRoute>
                 } />
 
@@ -74,21 +82,16 @@ export default function AnimatedRoutes() {
                         <PageTransition><LihatTiket /></PageTransition>
                     </PrivateRoute>
                 } />
-                <Route path="/tambah-user" element={
-                    <PrivateRoute allowedRoles={['ADMINISTRATOR']}>
-                        <PageTransition><TambahUser /></PageTransition>
-                    </PrivateRoute>
-                } />
 
                 {/* Protected: all authenticated roles */}
-                <Route path="/ticket-detail" element={
-                    <PrivateRoute>
-                        <PageTransition><DetailTiket /></PageTransition>
-                    </PrivateRoute>
-                } />
                 <Route path="/profile" element={
                     <PrivateRoute>
                         <PageTransition><Profile /></PageTransition>
+                    </PrivateRoute>
+                } />
+                <Route path="/ticket-detail" element={
+                    <PrivateRoute>
+                        <PageTransition><DetailTiket /></PageTransition>
                     </PrivateRoute>
                 } />
             </Routes>

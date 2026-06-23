@@ -24,11 +24,7 @@ export interface TicketResponse {
 export const ticketApi = {
   // 1. CREATE TICKET (LEAD / Kepala IT / Atasan)
   createTicket: async (data: FormData): Promise<any> => {
-    const response = await axiosClient.post("/api/ticket/create", data, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const response = await axiosClient.post("/api/ticket/create", data);
     return response.data;
   },
 

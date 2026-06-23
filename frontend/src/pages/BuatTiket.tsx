@@ -4,6 +4,11 @@ import CetakTiketGif from '../assets/assetcetaktiket.gif';
 import { authApi } from '../api/authApi';
 import { ticketApi } from '../api/ticketApi';
 
+type EmployeeOption = {
+    username: string;
+    displayName: string;
+};
+
 export default function BuatTiket() {
     const navigate = useNavigate();
 
@@ -22,24 +27,91 @@ export default function BuatTiket() {
         return `${day} ${months[month - 1]} ${year}`;
     };
 
-    const getInitialDateTime = () => {
+    const getInitialDate = () => {
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
+        return `${year}-${month}-${day}`;
+    };
+
+    const formatToDisplayDate = (dateString: string) => {
+        const [year, month, day] = dateString.split('-');
+        if (!year || !month || !day) return dateString;
+        return `${day}/${month}/${year}`;
+    };
+
+    const getApiData = (response: any) => response?.data ?? response;
+
+    const getCreatedTicketCode = (response: any) => {
+        const data = getApiData(response);
+        return data?.ticketCode ?? response?.ticketCode ?? data?.id ?? response?.id ?? "001";
+    };
+
+    const mapBackendStatus = (status?: string) => {
+        switch ((status ?? '').toLowerCase()) {
+            case 'open':
+                return 'Assigned';
+            case 'on progress':
+                return 'In Progress';
+            case 'complete':
+                return 'Completed';
+            default:
+                return status || 'Assigned';
+        }
+    };
+
+    const syncCreatedTicketToLocalStorage = (response: any) => {
+        const savedTicket = getApiData(response) ?? {};
+        const selectedEmployee = employees.find(emp => emp.username === assignedEmployeeId);
+        const ticketCode = getCreatedTicketCode(response);
+        const assignedEmployee = savedTicket.assignedEmployee ?? {};
+
+        const uiTicket = {
+            id: ticketCode,
+            ticketCode,
+            ticketName: savedTicket.ticketName ?? ticketName,
+            ticketDesc: savedTicket.ticketDesc ?? ticketDesc,
+            task: savedTicket.ticketName ?? ticketName,
+            fullDetail: savedTicket.ticketDesc ?? ticketDesc,
+            status: mapBackendStatus(savedTicket.status),
+            date: formatToDisplayDate(deadline),
+            deadline: formatToDisplayDate(deadline),
+            tech: assignedEmployee.employeeName ?? selectedEmployee?.displayName ?? assignedEmployeeId,
+            assignedEmployeeId,
+            assignedEmployeeName: assignedEmployee.employeeName ?? selectedEmployee?.displayName ?? '',
+            avatar: 'https://i.pravatar.cc/150?img=11',
+            dokumentasi: [],
+            createdAt: new Date().toLocaleString(),
+            assignedAt: new Date().toISOString(),
+            reopenCount: 0,
+            pointsEarned: 0,
+        };
+
+        let tickets: any[] = [];
+        try {
+            const savedTickets = localStorage.getItem('ticketsData');
+            const parsedTickets = savedTickets ? JSON.parse(savedTickets) : [];
+            tickets = Array.isArray(parsedTickets) ? parsedTickets : [];
+        } catch {
+            tickets = [];
+        }
+
+        const nextTickets = Array.isArray(tickets)
+            ? [...tickets.filter((ticket: any) => ticket.ticketCode !== ticketCode && ticket.id !== ticketCode), uiTicket]
+            : [uiTicket];
+
+        localStorage.setItem('ticketsData', JSON.stringify(nextTickets));
     };
 
     // ================= STATE FORM =================
     const [ticketName, setTicketName] = useState('');
     const [ticketDesc, setTicketDesc] = useState('');
-    const [deadline, setDeadline] = useState(getInitialDateTime());
+    const [deadline, setDeadline] = useState(getInitialDate());
     const [assignedEmployeeId, setAssignedEmployeeId] = useState('');
-    const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
+    const [evidenceFiles, setEvidenceFiles] = useState<File[]>([]);
 
-    const [employees, setEmployees] = useState<any[]>([]);
+    const [employees, setEmployees] = useState<EmployeeOption[]>([]);
     const [loadingEmployees, setLoadingEmployees] = useState(false);
     const [showSuccessPopup, setShowSuccessPopup] = useState(false);
     const [noTaskPopup, setNoTaskPopup] = useState('');
@@ -54,17 +126,18 @@ export default function BuatTiket() {
 
                 const staffList = list.filter((emp: any) => {
                     const role = emp.roleName || emp.rolename || (emp.role && emp.role.roleName) || '';
-                    return role.toUpperCase().includes('EMPLOYEE') || role.toUpperCase().includes('STAFF');
+                    const status = emp.status || emp.accountStatus || '';
+                    return role.toUpperCase().includes('EMPLOYEE') && status.toUpperCase() !== 'INACTIVE';
                 });
 
                 const processedList = staffList.map((emp: any) => {
                     // AMBIL USERNAME UNTUK VALUE (DI BALIK LAYAR)
-                    const username = emp.username || emp.userName || '';
+                    const username = emp.userName || emp.username || '';
                     // AMBIL EMPLOYEE NAME UNTUK TAMPILAN (DI LAYAR UI)
                     const fullName = emp.employeeName || emp.employeename || username;
 
                     return { username, displayName: fullName };
-                });
+                }).filter((emp: EmployeeOption) => emp.username);
 
                 setEmployees(processedList);
 
@@ -101,16 +174,16 @@ export default function BuatTiket() {
             // Mengirim username yang unik ke Backend
             formData.append('assignedEmployeeId', assignedEmployeeId);
 
-            if (evidenceFile) {
-                formData.append('files', evidenceFile);
-            }
+            evidenceFiles.forEach((file) => {
+                formData.append('files', file);
+            });
 
             console.log("Payload yang dikirim ke BE:", Object.fromEntries(formData.entries()));
 
             const result = await ticketApi.createTicket(formData);
+            syncCreatedTicketToLocalStorage(result);
 
-            const payload = result?.data ?? result;
-            const code = payload?.ticketCode ?? payload?.id ?? "001";
+            const code = getCreatedTicketCode(result);
             setNoTaskPopup(String(code));
 
             setShowSuccessPopup(true);
@@ -129,13 +202,13 @@ export default function BuatTiket() {
     const handleClear = () => {
         setTicketName('');
         setTicketDesc('');
-        setDeadline(getInitialDateTime());
+        setDeadline(getInitialDate());
         if (employees.length > 0) {
             setAssignedEmployeeId(employees[0].username);
         } else {
             setAssignedEmployeeId('');
         }
-        setEvidenceFile(null);
+        setEvidenceFiles([]);
         setSubmitError('');
     };
 
@@ -171,7 +244,7 @@ export default function BuatTiket() {
                     <div className="bg-white/20 border border-white/30 px-6 py-2 rounded-full text-white font-extrabold text-[14px] md:text-[15px] shadow-sm">
                         <span className="tracking-wide">Buat Tiket</span>
                     </div>
-                    <button onClick={() => navigate('/ticket-detail')} className="text-blue-100 hover:text-white font-bold text-[14px] md:text-[15px]">Detail Tiket</button>
+                    {/* <button onClick={() => navigate('/ticket-detail')} className="text-blue-100 hover:text-white font-bold text-[14px] md:text-[15px]">Detail Tiket</button> */}
                     <button onClick={() => navigate('/lihat-tiket')} className="text-blue-100 hover:text-white font-bold text-[14px] md:text-[15px]">Lihat Tiket</button>
                 </div>
                 <button onClick={() => navigate('/dashboard-head')} className="bg-white/10 hover:bg-white/20 border border-white/20 px-5 py-2 rounded-full text-white font-bold text-[12px] uppercase tracking-wider shrink-0">Home</button>
@@ -231,7 +304,7 @@ export default function BuatTiket() {
                             <div className="relative group">
                                 <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Deadline <span className="text-rose-500">*</span></label>
                                 <input
-                                    type="datetime-local"
+                                    type="date"
                                     value={deadline}
                                     onChange={(e) => setDeadline(e.target.value)}
                                     required
@@ -249,7 +322,9 @@ export default function BuatTiket() {
                                         required
                                         className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-800 font-bold text-[14px] outline-none appearance-none cursor-pointer hover:bg-slate-50 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:bg-white transition-all shadow-sm"
                                     >
-                                        <option value="" disabled>Pilih Staff IT...</option>
+                                        <option value="" disabled>
+                                            {loadingEmployees ? 'Memuat Staff IT...' : 'Pilih Staff IT...'}
+                                        </option>
                                         {employees.map(emp => (
                                             <option key={emp.username} value={emp.username}>
                                                 {emp.displayName}
@@ -266,15 +341,24 @@ export default function BuatTiket() {
                         {/* Upload Evidence */}
                         <div>
                             <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Upload Bukti / Dokumentasi (Opsional)</label>
-                            <label className={`mt-1 flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-all ${evidenceFile ? 'border-blue-400 bg-blue-50/50' : 'border-slate-300 bg-slate-50/50 hover:bg-slate-50 hover:border-blue-400 group'}`}>
+                            <label className={`mt-1 flex flex-col items-center justify-center w-full min-h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-all ${evidenceFiles.length > 0 ? 'border-blue-400 bg-blue-50/50' : 'border-slate-300 bg-slate-50/50 hover:bg-slate-50 hover:border-blue-400 group'}`}>
                                 <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
-                                    {evidenceFile ? (
+                                    {evidenceFiles.length > 0 ? (
                                         <>
                                             <div className="w-10 h-10 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center mb-2 shadow-sm">
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
                                             </div>
-                                            <p className="text-sm font-bold text-blue-700 truncate max-w-full">{evidenceFile.name}</p>
-                                            <p className="text-[11px] font-semibold text-blue-500/70 mt-1 uppercase tracking-widest">Klik untuk mengganti foto</p>
+                                            <p className="text-sm font-bold text-blue-700">
+                                                {evidenceFiles.length} file dipilih
+                                            </p>
+                                            <div className="mt-2 max-w-full space-y-1">
+                                                {evidenceFiles.map((file) => (
+                                                    <p key={`${file.name}-${file.lastModified}`} className="text-[12px] font-semibold text-blue-600 truncate max-w-[280px]">
+                                                        {file.name}
+                                                    </p>
+                                                ))}
+                                            </div>
+                                            <p className="text-[11px] font-semibold text-blue-500/70 mt-2 uppercase tracking-widest">Klik untuk mengganti foto</p>
                                         </>
                                     ) : (
                                         <>
@@ -288,11 +372,12 @@ export default function BuatTiket() {
                                 </div>
                                 <input 
                                     type="file" 
+                                    multiple
                                     accept="image/png, image/jpeg, image/jpg" 
                                     className="hidden" 
                                     onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) setEvidenceFile(file);
+                                        const files = Array.from(e.target.files ?? []);
+                                        setEvidenceFiles(files);
                                     }}
                                 />
                             </label>
